@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, MenuIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, EyeIcon, MenuIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -65,8 +65,16 @@ const MobileNav = () => {
                     href={child.href}
                     className="hover:text-primary flex items-center justify-between underline-offset-8 hover:underline"
                   >
-                    {child.label}
-                    <ArrowRightIcon className="size-4" />
+                    <div className="flex items-center gap-2">
+                      {child.icon ? (
+                        <child.icon className="text-primary size-5" />
+                      ) : (
+                        <></>
+                      )}
+
+                      {child.label}
+                    </div>
+                    <ArrowRightIcon className="size-5" />
                   </Link>
                 ))}
 
@@ -74,8 +82,11 @@ const MobileNav = () => {
                   href={section.href}
                   className="hover:text-primary flex items-center justify-between underline-offset-8 hover:underline"
                 >
-                  View All
-                  <ArrowRightIcon className="size-4" />
+                  <div className="flex items-center gap-2">
+                    <EyeIcon className="text-primary size-5" />
+                    View All
+                  </div>
+                  <ArrowRightIcon className="size-5" />
                 </Link>
               </AccordionContent>
             </AccordionItem>

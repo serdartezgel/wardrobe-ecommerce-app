@@ -1,28 +1,48 @@
-export type NavItem = {
+import {
+  Clock,
+  Flame,
+  Gift,
+  Leaf,
+  Star,
+  Stars,
+  Tag,
+  TrendingUp,
+} from "lucide-react";
+
+type NavItem = {
   label: string;
   href: string;
   children?: NavItem[];
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
 export const navLinks: NavItem[] = [
   {
-    label: "Deals",
+    label: "DEALS",
     href: "/deals",
     children: [
-      { label: "New Arrivals", href: "/deals/new-arrivals" },
-      { label: "Clearance", href: "/deals/clearance" },
-      { label: "Flash Sale", href: "/deals/flash-sale" },
-      { label: "Buy 1 Get 1", href: "/deals/bogo" },
-      { label: "Limited Time Offers", href: "/deals/limited-time" },
-      { label: "Under $25", href: "/deals/under-25" },
-      { label: "Seasonal Discounts", href: "/deals/seasonal" },
-      { label: "Trending Now", href: "/deals/trending" },
-      { label: "Last Chance", href: "/deals/last-chance" },
-      { label: "Exclusive Online Deals", href: "/deals/online-exclusive" },
+      { label: "Flash Sale", href: "/deals/flash-sale", icon: Flame },
+      { label: "New Arrivals", href: "/deals/new-arrivals", icon: Stars },
+      { label: "Clearance", href: "/deals/clearance", icon: Tag },
+      { label: "Buy 1 Get 1", href: "/deals/bogo", icon: Gift },
+      {
+        label: "Limited Time Offers",
+        href: "/deals/limited-time",
+        icon: Clock,
+      },
+      { label: "Under $25", href: "/deals/under-25", icon: Tag },
+      { label: "Seasonal Discounts", href: "/deals/seasonal", icon: Leaf },
+      { label: "Trending Now", href: "/deals/trending", icon: TrendingUp },
+      {
+        label: "Exclusive Online Deals",
+        href: "/deals/online-exclusive",
+        icon: Star,
+      },
+      { label: "Last Chance", href: "/deals/last-chance", icon: Clock },
     ],
   },
   {
-    label: "Men",
+    label: "MEN",
     href: "/men",
     children: [
       {
@@ -88,7 +108,7 @@ export const navLinks: NavItem[] = [
     ],
   },
   {
-    label: "Women",
+    label: "WOMEN",
     href: "/women",
     children: [
       {
@@ -164,7 +184,7 @@ export const navLinks: NavItem[] = [
     ],
   },
   {
-    label: "Kids",
+    label: "KIDS",
     href: "/kids",
     children: [
       {

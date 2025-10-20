@@ -12,11 +12,12 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { navLinks } from "@/lib/constants/navLinks";
+import { cn } from "@/lib/utils";
 
 const Navigation = () => {
   return (
-    <NavigationMenu>
-      <NavigationMenuList className="font-space-grotesk flex w-1/3 items-center justify-start text-sm font-medium max-md:hidden lg:gap-8">
+    <NavigationMenu className="max-md:hidden">
+      <NavigationMenuList className="font-space-grotesk flex w-1/3 items-center justify-start text-sm font-medium lg:gap-8">
         {navLinks.map((section) => (
           <NavigationMenuItem key={section.label}>
             <NavigationMenuTrigger>
@@ -24,15 +25,29 @@ const Navigation = () => {
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="w-[718px]">
-                <div className="grid grid-cols-3 py-4">
+                <div
+                  className={cn(
+                    "grid grid-flow-col grid-rows-2 py-4",
+                    section.children!.length > 6 && "grid-rows-3",
+                    section.children!.length > 9 && "grid-rows-4",
+                  )}
+                >
                   {section.children!.map((child) => (
                     <li key={child.label} className="py-4">
                       <NavigationMenuLink asChild>
                         <Link
                           href={child.href}
-                          className="mx-4 flex flex-row justify-between border-b py-2 text-sm leading-none font-medium"
+                          className="font-space-grotesk mx-4 flex flex-row items-center justify-between gap-4 border-b py-2 text-sm leading-none font-medium"
                         >
-                          {child.label}
+                          <div className="flex items-center gap-2">
+                            {child.icon ? (
+                              <child.icon className="text-primary" />
+                            ) : (
+                              <></>
+                            )}
+
+                            {child.label}
+                          </div>
                           <ArrowRightIcon className="size-4 text-inherit" />
                         </Link>
                       </NavigationMenuLink>
