@@ -1,7 +1,7 @@
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
-import Navbar from "@/components/layout/Navbar";
+import Navbar from "@/components/layout/navigation/Navbar";
 
 const ShopLayout = ({ children }: { children: React.ReactNode }) => {
   return (

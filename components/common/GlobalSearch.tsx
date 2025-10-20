@@ -17,7 +17,7 @@ import {
 } from "../ui/drawer";
 import { Input } from "../ui/input";
 
-const SearchButton = () => {
+const GlobarSearch = () => {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -68,4 +68,4 @@ const SearchButton = () => {
   );
 };
 
-export default SearchButton;
+export default GlobarSearch;
