@@ -31,7 +31,7 @@ const Theme = () => {
         <Button
           variant={"ghost"}
           size={"icon-lg"}
-          className="no-focus max-md:hidden"
+          className="no-focus cursor-pointer max-md:hidden"
         >
           <Sun
             size={20}

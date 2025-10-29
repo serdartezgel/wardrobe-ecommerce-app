@@ -17,10 +17,10 @@ import { cn } from "@/lib/utils";
 const Navigation = () => {
   return (
     <NavigationMenu className="max-md:hidden">
-      <NavigationMenuList className="font-space-grotesk flex w-1/3 items-center justify-start text-sm font-medium lg:gap-8">
+      <NavigationMenuList className="font-space-grotesk flex items-center justify-start text-sm font-medium lg:gap-6">
         {navLinks.map((section) => (
           <NavigationMenuItem key={section.label}>
-            <NavigationMenuTrigger>
+            <NavigationMenuTrigger className="px-2">
               <Link href={section.href}>{section.label}</Link>
             </NavigationMenuTrigger>
             <NavigationMenuContent>
