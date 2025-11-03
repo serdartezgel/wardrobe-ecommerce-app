@@ -2,7 +2,10 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 
+import VerificationEmail from "@/lib/email/VerificationEmail";
 import prisma from "@/lib/prisma";
+
+import { resend } from "./resend";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -11,6 +14,20 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await resend.emails.send({
+        from: "Acme <onboarding@resend.dev>",
+        to: ["delivered@resend.dev"],
+        subject: "Verify your Wardrobe email",
+        react: VerificationEmail({ url, username: user.name }),
+      });
+    },
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
   },
   user: {
     additionalFields: {

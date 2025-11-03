@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { signIn } from "@/lib/auth-client";
+import { encrypt } from "@/lib/utils/encryption";
 import { SignInInput, SignInSchema } from "@/lib/validations/auth.validation";
 
 import { Button } from "../ui/button";
@@ -35,23 +36,31 @@ const SignInForm = () => {
 
   const handleSubmit = async (data: SignInInput) => {
     try {
-      const response = await signIn.email(data);
+      const response = await signIn.email(data, {
+        onError: (ctx) => {
+          if (ctx.error.status === 403) {
+            router.push(`/verify-email?token=${encrypt(data.email)}`);
+          }
+        },
+      });
+      console.log(response);
 
       if (response.error) throw new Error(response.error.message);
 
-      toast.success("Account created successfully!", {
+      toast.success("Sign in successfull", {
         description: "Welcome to Wardrobe",
       });
 
       router.push("/");
     } catch (error) {
+      console.log(error);
       if (error instanceof Error) {
-        toast.error("Sign up failed", {
-          description: error.message || "Failed to create account",
+        toast.error("Sign in failed", {
+          description: error.message || "Failed to sign in",
         });
       } else {
-        toast.error("Sign up failed", {
-          description: "Failed to create account",
+        toast.error("Sign in failed", {
+          description: "Failed to sign in",
         });
       }
     }
@@ -62,9 +71,18 @@ const SignInForm = () => {
   return (
     <Card className="w-full sm:max-w-lg">
       <CardHeader>
-        <CardTitle className="font-serif text-3xl font-bold tracking-tight">
-          Welcome back!
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="font-serif text-3xl font-bold tracking-tight">
+            Welcome back!
+          </CardTitle>
+          <Link
+            href="/"
+            className="text-primary inline-flex items-center gap-1 text-sm font-medium transition-colors hover:underline"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Go back home
+          </Link>
+        </div>
         <CardDescription className="text-muted-foreground">
           Sign in to your account to continue shopping
         </CardDescription>

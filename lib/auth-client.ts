@@ -10,6 +10,7 @@ export const {
   useSession,
   changeEmail,
   changePassword,
+  sendVerificationEmail,
 } = createAuthClient({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   plugins: [inferAdditionalFields<typeof auth>()],

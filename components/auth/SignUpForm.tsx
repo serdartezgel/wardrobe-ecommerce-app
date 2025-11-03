@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { signUp } from "@/lib/auth-client";
+import { encrypt } from "@/lib/utils/encryption";
 import { SignUpInput, SignUpSchema } from "@/lib/validations/auth.validation";
 
 import { Button } from "../ui/button";
@@ -45,7 +46,7 @@ const SignUpForm = () => {
         description: "Welcome to Wardrobe",
       });
 
-      router.push("/");
+      router.push(`/verify-email?token=${encrypt(data.email)}`);
     } catch (error) {
       if (error instanceof Error) {
         toast.error("Sign up failed", {
