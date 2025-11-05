@@ -43,7 +43,6 @@ const SignInForm = () => {
           }
         },
       });
-      console.log(response);
 
       if (response.error) throw new Error(response.error.message);
 
@@ -53,7 +52,6 @@ const SignInForm = () => {
 
       router.push("/");
     } catch (error) {
-      console.log(error);
       if (error instanceof Error) {
         toast.error("Sign in failed", {
           description: error.message || "Failed to sign in",
