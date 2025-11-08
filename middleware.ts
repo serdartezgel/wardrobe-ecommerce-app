@@ -14,18 +14,32 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/sign-up") ||
     pathname.startsWith("/forgot-password");
   const isAccountPage = pathname.startsWith("/account");
-  const isAdminPage = pathname.startsWith("/admin");
+  const isDashboard = pathname.startsWith("/dashboard");
 
-  if (!session && isAccountPage) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
-
-  if (!session && isAdminPage) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
+  const superAdminRoutes = ["/dashboard/users", "/dashboard/settings"];
+  const isSuperAdminRoute = superAdminRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
 
   if (session && isAuthPage) {
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!session && (isAccountPage || isDashboard)) {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  if (isSuperAdminRoute && session?.user.role !== "SUPER_ADMIN") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isDashboard) {
+    if (
+      session?.user.role !== "ADMIN" &&
+      session?.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   return NextResponse.next();
@@ -38,6 +52,6 @@ export const config = {
     "/sign-up/:path*",
     "/forgot-password/:path*",
     "/account/:path*",
-    "/admin/:path*",
+    "/dashboard/:path*",
   ],
 };

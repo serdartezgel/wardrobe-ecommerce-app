@@ -3,9 +3,11 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 
 import VerificationEmail from "@/lib/email/VerificationEmail";
-import prisma from "@/lib/prisma";
 
+import { PrismaClient } from "./generated/prisma";
 import { resend } from "./resend";
+
+const prisma = new PrismaClient();
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
