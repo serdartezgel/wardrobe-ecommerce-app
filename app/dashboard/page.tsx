@@ -1,18 +1,77 @@
+import OverviewCard from "@/components/cards/OverviewCard";
+import RecentActivities from "@/components/cards/RecentActivities";
+import CategoryRevenueChart from "@/components/charts/CategoryRevenueChart";
+import CustomerGrowthChart from "@/components/charts/CustomerGrowthChart";
+import InventoryStatusChart from "@/components/charts/InventoryStatusChart";
+import OrdersChart from "@/components/charts/OrdersChart";
+import SalesChart from "@/components/charts/SalesChart";
+import TopSellingChart from "@/components/charts/TopSellingChart";
+
+const DUMMY_DASHBOARD_METRICS: DashboardMetrics = {
+  // Sales Metrics
+  totalRevenue: {
+    current: 42380,
+    previous: 37750,
+    percentChange: 12.3,
+  },
+  totalOrders: {
+    current: 1284,
+    previous: 1325,
+    percentChange: -3.1,
+  },
+  averageOrderValue: {
+    current: 33.0,
+    previous: 28.5,
+    percentChange: 15.8,
+  },
+
+  // Customer Metrics
+  totalCustomers: 460,
+  newCustomers: 342,
+  returningCustomers: 118,
+
+  // Product Metrics
+  totalProducts: 128,
+  activeProducts: 110,
+  lowStockProducts: 12,
+  outOfStockProducts: 6,
+
+  // Order Status
+  pendingOrders: 23,
+  processingOrders: 15,
+  shippedOrders: 1246,
+
+  // Review Metrics
+  pendingReviews: 7,
+  averageRating: 4.3,
+
+  // Deals & Coupons
+  activeDeals: 5,
+  activeCoupons: 12,
+};
+
 const DashboardPage = () => {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <header>
+        <h1 className="text-3xl font-bold">Overview</h1>
         <p className="text-muted-foreground mt-1">
-          Welcome back! Here&apos;s what&apos;s happening today.
+          Welcome back! Here&apos;s an overview of your shop.
         </p>
+      </header>
+
+      <OverviewCard metrics={DUMMY_DASHBOARD_METRICS} />
+
+      <div className="grid grid-cols-1 gap-x-4 gap-y-6 lg:grid-cols-2">
+        <SalesChart />
+        <OrdersChart />
+        <TopSellingChart />
+        <CategoryRevenueChart />
+        <CustomerGrowthChart />
+        <InventoryStatusChart />
       </div>
 
-      <div className="">Stat Cards</div>
-
-      <div className="">Charts</div>
-
-      <div className="">Recent Activity Feed</div>
+      <RecentActivities />
     </div>
   );
 };

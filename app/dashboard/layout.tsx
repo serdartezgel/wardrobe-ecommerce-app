@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import DashboardHeader from "@/components/layout/DashboardHeader";
 import DashboardSidebar from "@/components/layout/DashboardSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
@@ -21,19 +22,19 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
+      <div className="flex h-screen w-full">
         <DashboardSidebar
           role={user.role}
           variant="floating"
           className="w-64"
           collapsible="icon"
         />
-        <SidebarTrigger className="-mx-2 mt-8 size-8 rounded-l-none border border-l-0" />
+        <SidebarTrigger className="mt-8 size-8 rounded-l-none border border-l-0 md:-mx-2" />
 
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="">Header</div>
+        <div className="flex flex-1 flex-col overflow-hidden md:ml-4">
+          <DashboardHeader user={user} />
 
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto py-6 pr-6">{children}</main>
         </div>
       </div>
     </SidebarProvider>

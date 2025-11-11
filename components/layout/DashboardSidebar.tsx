@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, LogOutIcon } from "lucide-react";
+import { ArrowLeftIcon, LogOutIcon, User2Icon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -122,6 +122,29 @@ const DashboardSidebar = ({ role, ...props }: DashboardSidebarProps) => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActivePath("/dashboard/profile")}
+                    >
+                      <Link
+                        href={"/dashboard/profile"}
+                        className="flex items-center gap-3 px-4 py-3 font-medium transition-colors"
+                      >
+                        <User2Icon className="size-5" />
+                        Profile
+                      </Link>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    className={state === "expanded" ? "hidden" : ""}
+                  >
+                    <p>Profile</p>
+                  </TooltipContent>
+                </Tooltip>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <Tooltip>
                   <TooltipTrigger asChild>
