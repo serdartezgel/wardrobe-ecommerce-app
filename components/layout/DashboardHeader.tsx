@@ -13,7 +13,7 @@ const DashboardHeader = ({ user }: { user: User }) => {
       <Link href={"/dashboard/profile"} className="flex items-center gap-4">
         <div className="flex flex-col">
           <p className="font-medium">{user.name}</p>
-          <span className="text-accent text-xs">{user.role}</span>
+          <span className="text-accent-foreground text-xs">{user.role}</span>
         </div>
         <Avatar className="border-border h-10 w-10 border">
           <AvatarImage src={user.image || undefined} alt={user.name} />

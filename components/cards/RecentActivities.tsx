@@ -4,7 +4,7 @@ import {
   TabsContents,
   TabsList,
   TabsTrigger,
-} from "../animate-ui/components/animate/tabs";
+} from "../ui/animate-ui/components/animate/tabs";
 import {
   Card,
   CardContent,
