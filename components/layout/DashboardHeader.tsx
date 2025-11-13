@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const DashboardHeader = ({ user }: { user: User }) => {
   return (
-    <div className="mt-2 mr-10 flex items-center justify-end gap-6 border-b px-6 py-4">
+    <div className="bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex w-full items-center justify-end gap-6 border-b py-4 backdrop-blur">
       <ModeToggle />
       <Link href={"/dashboard/profile"} className="flex items-center gap-4">
         <div className="flex flex-col">

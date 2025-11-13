@@ -3,10 +3,8 @@
 import { ColumnDef, CoreRow } from "@tanstack/react-table";
 import { ArrowUpDownIcon, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import { ReadonlyURLSearchParams } from "next/navigation";
 
-import { Product } from "@/lib/generated/prisma";
-import { formUrlQuery } from "@/lib/utils/url";
+import { ProductWithRelations } from "@/types/prisma";
 
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -19,10 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-export const getProductColumns = (
-  searchParams: ReadonlyURLSearchParams,
-  pathname: string,
-): ColumnDef<Product>[] => [
+export const getProductColumns = (): ColumnDef<ProductWithRelations>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -44,116 +39,106 @@ export const getProductColumns = (
     ),
   },
   {
-    accessorFn: (row) => row.name,
-    id: "name",
-    header: () => {
-      const newUrl = formUrlQuery({
-        params: searchParams.toString(),
-        key: "sort",
-        value: searchParams.get("sort") === "asc" ? "desc" : "asc",
-        pathname,
-      });
-      return (
-        <Button
-          asChild
-          variant={"link"}
-          className="w-full justify-between !pl-0"
-        >
-          <Link href={newUrl}>
-            Product Name <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      );
-    },
+    accessorKey: "name",
+    header: ({ column }) => (
+      <Button
+        variant={"link"}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="w-full cursor-pointer justify-between !pl-0"
+      >
+        Name <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => (
-      <Link href={`/dashboard/products/${row.original.slug}`}>
+      <Link
+        href={`/dashboard/products/${row.original.slug}`}
+        className="hover:underline hover:underline-offset-4"
+      >
         {row.original.name}
       </Link>
     ),
+    filterFn: "includesString",
   },
   {
     accessorFn: (row) => row.brand.name,
     id: "brand",
-    header: () => {
-      const newUrl = formUrlQuery({
-        params: searchParams.toString(),
-        key: "sort",
-        value: searchParams.get("sort") === "asc" ? "desc" : "asc",
-        pathname,
-      });
-      return (
-        <Button
-          asChild
-          variant={"link"}
-          className="w-full justify-between !pl-0"
-        >
-          <Link href={newUrl}>
-            Brand <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        variant={"link"}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="w-full cursor-pointer justify-between !pl-0"
+      >
+        Brand <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => (
-      <Link href={`/dashboard/products/${row.original.brand.name}`}>
+      <Link
+        href={`/dashboard/products/${row.original.brand.name}`}
+        className="hover:underline hover:underline-offset-4"
+      >
         {row.original.brand.name}
       </Link>
     ),
+    filterFn: "includesString",
   },
   {
     accessorFn: (row) => row.category.name,
     id: "category",
-    header: () => {
-      const newUrl = formUrlQuery({
-        params: searchParams.toString(),
-        key: "sort",
-        value: searchParams.get("sort") === "asc" ? "desc" : "asc",
-        pathname,
-      });
-      return (
-        <Button
-          asChild
-          variant={"link"}
-          className="w-full justify-between !pl-0"
-        >
-          <Link href={newUrl}>
-            Category <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        variant={"link"}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="w-full cursor-pointer justify-between !pl-0"
+      >
+        Category <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => (
-      <Link href={`/dashboard/products/${row.original.category.name}`}>
+      <Link
+        href={`/dashboard/products/${row.original.category.name}`}
+        className="hover:underline hover:underline-offset-4"
+      >
         {row.original.category.name}
       </Link>
     ),
+    filterFn: "includesString",
   },
   {
     accessorKey: "sku",
     header: "SKU",
+    filterFn: "includesString",
   },
   {
     accessorKey: "basePrice",
     header: "Base Price",
+    filterFn: "inNumberRange",
   },
   {
-    accessorKey: "isActive",
+    accessorFn: (row) => row.isActive,
+    id: "status",
     header: "Status",
     cell: ({ row }) => (row.original.isActive ? "Active" : "Inactive"),
+    filterFn: (row, columnId, filterValue) => {
+      const rowValue = row.getValue<boolean>(columnId);
+      if (filterValue === "active") return rowValue === true;
+      if (filterValue === "inactive") return rowValue === false;
+      return true;
+    },
   },
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }: { row: CoreRow<Product> }) => (
+    cell: ({ row }: { row: CoreRow<ProductWithRelations> }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="link" className="h-8 w-8 p-0">
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel className="sr-only">Actions</DropdownMenuLabel>
-          <DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href={`/dashboard/products/${row.original.slug}`}>
               View Details
             </Link>
@@ -165,9 +150,7 @@ export const getProductColumns = (
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href={""}>Delete</Link>
-          </DropdownMenuItem>
+          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

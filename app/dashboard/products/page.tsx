@@ -1,9 +1,5 @@
 import Link from "next/link";
 
-import LocalSearch from "@/components/common/LocalSearch";
-import Pagination from "@/components/common/Pagination";
-import ProductBulkActions from "@/components/dashboard/ProductBulkActions";
-import DashboardProductFilters from "@/components/filters/DashboardProductFilters";
 import ProductsTable from "@/components/tables/ProductsTable";
 import { Button } from "@/components/ui/button";
 
@@ -23,24 +19,7 @@ const ProductsPage = () => {
         </Button>
       </header>
 
-      <section>
-        <LocalSearch route="/dashboard/products" />
-      </section>
-
-      <section className="flex flex-wrap items-center justify-between gap-4">
-        <DashboardProductFilters />
-        <ProductBulkActions />
-      </section>
-
-      <section></section>
-
-      <section>
-        <ProductsTable />
-      </section>
-
-      <section>
-        <Pagination isNext={false} totalItems={0} />
-      </section>
+      <ProductsTable />
     </div>
   );
 };

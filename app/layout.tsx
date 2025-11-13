@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} ${spaceGrotesk.variable} antialiased`}
+        className={`${inter.className} ${spaceGrotesk.variable} overflow-hidden antialiased`}
       >
         <ThemeProvider attribute={"class"} defaultTheme="system" enableSystem>
           {children}

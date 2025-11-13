@@ -1,10 +1,8 @@
 "use client";
 
-import { ChevronDownIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-
-import { formUrlQuery, removeKeysFromUrlQuery } from "@/lib/utils/url";
+import { Table } from "@tanstack/react-table";
+import { ChevronDownIcon, SlidersHorizontalIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import FilterBadge from "./FilterBadge";
 import { Button } from "../ui/button";
@@ -47,164 +45,90 @@ const mockTags = [
   "premium",
 ];
 
-const DashboardProductFilters = () => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = searchParams.toString();
+interface DataTableProps<TData> {
+  table: Table<TData>;
+}
 
+const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
-  const status = searchParams.get("status") || "all";
-  const category = searchParams.get("category") || "all";
-  const brand = searchParams.get("brand") || "all";
-  const stockStatus = searchParams.get("stock") || "all";
-  const minPrice = searchParams.get("minPrice") || "";
-  const maxPrice = searchParams.get("maxPrice") || "";
+  const [status, setStatus] = useState("");
+  const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
 
-  const [priceRange, setPriceRange] = useState<number[]>([
-    Number(minPrice) || 0,
-    Number(maxPrice) || 1000,
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(1000);
+
+  const tableRows = table.getCoreRowModel().rows;
+  const statusFilterValue = table.getColumn("status")?.getFilterValue();
+  const categoryFilterValue = table.getColumn("category")?.getFilterValue();
+  const brandFilterValue = table.getColumn("brand")?.getFilterValue();
+
+  useEffect(() => {
+    const currentStatus =
+      (table.getColumn("status")?.getFilterValue() as string) ?? "";
+    const currentCategory =
+      (table.getColumn("category")?.getFilterValue() as string) ?? "";
+    const currentBrand =
+      (table.getColumn("brand")?.getFilterValue() as string) ?? "";
+
+    setStatus(currentStatus);
+    setCategory(currentCategory);
+    setBrand(currentBrand);
+
+    const prices = table
+      .getCoreRowModel()
+      .rows.map((row) => row.getValue<number>("basePrice"));
+
+    const min = prices.length > 0 ? Math.min(...prices) : 0;
+    const max = prices.length > 0 ? Math.max(...prices) : 1000;
+
+    setMinPrice(min);
+    setMaxPrice(max);
+
+    setPriceRange((prev) => [Math.max(prev[0], min), Math.min(prev[1], max)]);
+  }, [
+    tableRows,
+    statusFilterValue,
+    categoryFilterValue,
+    brandFilterValue,
+    table,
   ]);
 
-  const tags = useMemo(() => {
-    const raw = searchParams.get("tags");
-    return raw ? raw.split(",").filter(Boolean) : [];
-  }, [searchParams]);
-
-  useEffect(() => {
-    let count = 0;
-    if (status !== "all") count++;
-    if (category !== "all") count++;
-    if (brand !== "all") count++;
-    if (minPrice || maxPrice) count++;
-    if (stockStatus !== "all") count++;
-    count += tags.length;
-    setActiveFiltersCount(count);
-  }, [status, category, brand, minPrice, maxPrice, stockStatus, tags]);
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      let url = params;
-
-      url = formUrlQuery({
-        params: url.split("?")[1] ?? params,
-        key: "minPrice",
-        value: priceRange[0].toString(),
-        pathname,
-      });
-
-      url = formUrlQuery({
-        params: url.split("?")[1] ?? params,
-        key: "maxPrice",
-        value: priceRange[1].toString(),
-        pathname,
-      });
-
-      if (priceRange[0] === 0 && priceRange[1] === 1000) {
-        url = removeKeysFromUrlQuery({
-          params,
-          keysToRemove: ["minPrice", "maxPrice"],
-          pathname,
-        });
-      }
-
-      console.log(url, url.split("?")[1]);
-
-      router.push(url, { scroll: false });
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [router, pathname, searchParams, priceRange, params]);
-
-  const updateSearchParams = (key: string, value: string | null) => {
-    const params = searchParams.toString();
-
-    const defaultValues = ["all", "", null];
-
-    let url;
-
-    if (defaultValues.includes(value)) {
-      url = removeKeysFromUrlQuery({
-        params,
-        keysToRemove: [key],
-        pathname,
-      });
-    } else {
-      url = formUrlQuery({
-        params,
-        key,
-        value,
-        pathname,
-      });
-    }
-
-    router.push(url, { scroll: false });
-  };
-
-  const handleTagToggle = (tag: string) => {
-    const newTags = tags.includes(tag)
-      ? tags.filter((t) => t !== tag)
-      : [...tags, tag];
-
-    let url;
-
-    if (newTags.length > 0) {
-      url = formUrlQuery({
-        params: searchParams.toString(),
-        key: "tags",
-        value: newTags.join(","),
-        pathname,
-      });
-    } else {
-      url = removeKeysFromUrlQuery({
-        params: searchParams.toString(),
-        keysToRemove: ["tags"],
-        pathname,
-      });
-    }
-
-    router.push(url, { scroll: false });
-  };
+  const activeFiltersCount = [
+    status !== "",
+    category !== "",
+    brand !== "",
+    priceRange[0] > minPrice || priceRange[1] < maxPrice,
+    // tags.length > 0,
+  ].filter(Boolean).length;
 
   const handleClearFilters = () => {
-    const url = removeKeysFromUrlQuery({
-      params: searchParams.toString(),
-      keysToRemove: [
-        "status",
-        "category",
-        "brand",
-        "minPrice",
-        "maxPrice",
-        "stock",
-        "tags",
-      ],
-      pathname,
-    });
-    setPriceRange([0, 1000]);
-
-    router.push(url, { scroll: false });
+    table.resetColumnFilters();
+    setPriceRange([minPrice, maxPrice]);
   };
 
-  const removeFilter = (key: string) => {
-    const url = removeKeysFromUrlQuery({
-      params: searchParams.toString(),
-      keysToRemove: [key],
-      pathname,
-    });
-
-    router.push(url, { scroll: false });
-  };
+  // const handleTagToggle = (tag: string) => {
+  //   const currentTags = table.getColumn("tags")?.getFilterValue() ?? [];
+  //   const newTags = currentTags.includes(tag)
+  //     ? currentTags.filter((t: string) => t !== tag)
+  //     : [...currentTags, tag];
+  //   table.getColumn("tags")?.setFilterValue(newTags);
+  // };
 
   return (
-    <div className="bg-sidebar border-border mb-4 w-fit rounded-lg border-2 px-4 pt-4 shadow-sm">
+    <div className="bg-muted border-border max-w-2xl rounded-lg border px-4 pt-4 shadow-sm">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Status */}
           <Select
             value={status}
-            onValueChange={(value) => updateSearchParams("status", value)}
+            onValueChange={(value) =>
+              table
+                .getColumn("status")
+                ?.setFilterValue(value === "all" ? "" : value)
+            }
           >
             <SelectTrigger className="no-focus">
               <SelectValue placeholder="Select status" />
@@ -222,7 +146,11 @@ const DashboardProductFilters = () => {
           {/* Category */}
           <Select
             value={category}
-            onValueChange={(value) => updateSearchParams("category", value)}
+            onValueChange={(value) =>
+              table
+                .getColumn("category")
+                ?.setFilterValue(value === "all" ? "" : value)
+            }
           >
             <SelectTrigger className="no-focus">
               <SelectValue placeholder="Select category" />
@@ -243,7 +171,11 @@ const DashboardProductFilters = () => {
           {/* Brand */}
           <Select
             value={brand}
-            onValueChange={(value) => updateSearchParams("brand", value)}
+            onValueChange={(value) =>
+              table
+                .getColumn("brand")
+                ?.setFilterValue(value === "all" ? "" : value)
+            }
           >
             <SelectTrigger className="no-focus">
               <SelectValue placeholder="Select brand" />
@@ -261,30 +193,11 @@ const DashboardProductFilters = () => {
             </SelectContent>
           </Select>
 
-          {/* Stock */}
-          <Select
-            value={stockStatus}
-            onValueChange={(value) => updateSearchParams("stock", value)}
-          >
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select stock" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Stock</SelectLabel>
-                <SelectItem value="all">All Stock</SelectItem>
-                <SelectItem value="in-stock">In Stock</SelectItem>
-                <SelectItem value="low-stock">Low Stock</SelectItem>
-                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
           {/* More Filters Toggle */}
           <Button
             variant={"secondary"}
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="dark:bg-input/30 dark:hover:bg-input/50 border-input border bg-transparent"
+            className="dark:bg-input/30 dark:hover:bg-input/50 border-input text-muted-foreground border bg-transparent"
           >
             <SlidersHorizontalIcon className="size-4" />
             More Filters
@@ -322,13 +235,16 @@ const DashboardProductFilters = () => {
             {/* Price Range */}
             <div>
               <Label className="mb-2 text-sm font-medium">Price Range</Label>
-              <div className="bg-sidebar my-4 flex max-w-sm flex-col gap-3 rounded-lg border-2 px-4 shadow-sm">
+              <div className="bg-muted my-4 flex max-w-sm flex-col gap-3 rounded-lg border px-4 shadow-sm">
                 <Slider
                   value={priceRange}
-                  min={0}
-                  max={1000}
+                  min={minPrice}
+                  max={maxPrice}
                   step={1}
-                  onValueChange={(value) => setPriceRange([value[0], value[1]])}
+                  onValueChange={(value) => {
+                    setPriceRange([value[0], value[1]]);
+                    table.getColumn("basePrice")?.setFilterValue(value);
+                  }}
                 />{" "}
                 <div className="text-muted-foreground flex justify-between text-sm">
                   {" "}
@@ -345,17 +261,17 @@ const DashboardProductFilters = () => {
                 {mockTags.map((tag) => (
                   <Button
                     key={tag}
-                    onClick={() => handleTagToggle(tag)}
-                    className={`rounded-full px-3 py-1.5 text-sm ${
-                      tags.includes(tag)
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-accent text-accent-foreground"
-                    }`}
+                    // onClick={() => handleTagToggle(tag)}
+                    // className={`rounded-full px-3 py-1.5 text-sm ${
+                    //   tags.includes(tag)
+                    //     ? "bg-primary text-primary-foreground"
+                    //     : "bg-accent text-accent-foreground"
+                    // }`}
                   >
                     {tag}
-                    {tags.includes(tag) && (
+                    {/* {tags.includes(tag) && (
                       <XIcon className="ml-1 inline-block size-3" />
-                    )}
+                    )} */}
                   </Button>
                 ))}
               </div>
@@ -370,54 +286,56 @@ const DashboardProductFilters = () => {
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-medium">Active Filters:</span>
 
-            {status !== "all" && (
+            {status !== "" && (
               <FilterBadge
                 label={`Status: ${status}`}
-                onRemove={() => removeFilter("status")}
+                onRemove={() => table.getColumn("status")?.setFilterValue("")}
               />
             )}
 
-            {category !== "all" && (
+            {category !== "" && (
               <FilterBadge
                 label={`Category: ${
                   mockCategories.find((c) => c.slug === category)?.name
                 }`}
-                onRemove={() => removeFilter("category")}
+                onRemove={() => table.getColumn("category")?.setFilterValue("")}
               />
             )}
 
-            {brand !== "all" && (
+            {brand !== "" && (
               <FilterBadge
                 label={`Brand: ${mockBrands.find((b) => b.slug === brand)?.name}`}
-                onRemove={() => removeFilter("brand")}
+                onRemove={() => table.getColumn("brand")?.setFilterValue("")}
               />
             )}
 
-            {(minPrice || maxPrice) && (
+            {(minPrice !== priceRange[0] || maxPrice !== priceRange[1]) && (
               <FilterBadge
-                label={`Price: $${minPrice || "0"} – $${maxPrice || "1000"}`}
+                label={`Price: $${priceRange[0] || "0"} – $${priceRange[1] || "1000"}`}
                 onRemove={() => {
                   setPriceRange([0, 1000]);
-                  removeFilter("minPrice");
-                  removeFilter("maxPrice");
+                  table.getColumn("basePrice")?.setFilterValue([0, 1000]);
                 }}
               />
             )}
 
-            {stockStatus !== "all" && (
+            {/* {stockStatus !== "all" && (
               <FilterBadge
                 label={`Stock: ${stockStatus}`}
-                onRemove={() => removeFilter("stock")}
+                onRemove={
+                  () =>
+                  table.getColumn("stockStatus")?.setFilterValue("all")
+                }
               />
-            )}
+            )} */}
 
-            {tags.map((tag) => (
+            {/* {tags.map((tag) => (
               <FilterBadge
                 key={tag}
                 label={`Tag: ${tag}`}
                 onRemove={() => handleTagToggle(tag)}
               />
-            ))}
+            ))} */}
           </div>
         </div>
       )}

@@ -9,7 +9,7 @@ import { Button } from "../../ui/button";
 
 const Navbar = () => {
   return (
-    <nav className="bg-muted flex h-[69px] items-center justify-between border-b px-4 py-3 lg:px-8">
+    <nav className="bg-muted sticky flex h-[69px] w-full items-center justify-between border-b px-4 py-6 lg:px-8">
       <div className="w-1/3">
         <MobileNav />
         <Navigation />

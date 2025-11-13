@@ -6,8 +6,8 @@ import Navbar from "@/components/layout/navigation/Navbar";
 
 const ShopLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex min-h-screen flex-col">
-      <div className="bg-primary text-primary-foreground group flex h-10 w-full cursor-pointer items-center justify-center gap-2 transition-all duration-300 ease-in-out">
+    <div className="flex h-screen w-full flex-col overflow-y-auto">
+      <div className="bg-primary text-primary-foreground group flex w-full cursor-pointer items-center justify-center gap-2 py-2 transition-all duration-300 ease-in-out">
         <Link
           href={"/deals"}
           className="text-sm font-medium underline-offset-8 group-hover:underline"
