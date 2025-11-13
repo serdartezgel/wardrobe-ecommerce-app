@@ -6,5 +6,6 @@ export type ProductWithRelations = Prisma.ProductGetPayload<{
     category: true;
     variants: true;
     images: true;
+    productOptions: true;
   };
 }>;

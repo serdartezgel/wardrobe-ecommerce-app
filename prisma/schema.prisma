@@ -14,6 +14,12 @@ enum UserRole {
   SUPER_ADMIN
 }
 
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum OrderStatus {
   PENDING
   PROCESSING
@@ -202,29 +208,31 @@ model Product {
   brandId String
   brand   Brand  @relation(fields: [brandId], references: [id])
 
-  basePrice  Decimal  @db.Decimal(10, 2)
-  isActive   Boolean  @default(true)
-  isFeatured Boolean  @default(false)
+  basePrice  Decimal       @db.Decimal(10, 2)
+  isActive   Boolean       @default(true)
+  isFeatured Boolean       @default(false)
+  status     ProductStatus @default(DRAFT)
   tags       String[]
 
   metaTitle       String?
   metaDescription String?
 
-  variants    ProductVariant[]
-  images      ProductImage[]
-  reviews     Review[]
-  wishlists   Wishlist[]
-  collections CollectionProduct[]
-  promotions  PromotionProduct[]
-
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  variants       ProductVariant[]
+  images         ProductImage[]
+  reviews        Review[]
+  wishlists      Wishlist[]
+  collections    CollectionProduct[]
+  promotions     PromotionProduct[]
   productOptions ProductOption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([categoryId])
   @@index([brandId])
   @@index([isFeatured])
+  @@index([status])
 }
 
 model ProductVariant {
