@@ -19,12 +19,12 @@ import { UserRole } from "../generated/prisma";
 export function getSidebarLinks(role: UserRole) {
   const links = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/dashboard/categories", label: "Categories", icon: FolderTree },
+    { href: "/dashboard/brands", label: "Brands", icon: Tag },
     { href: "/dashboard/products", label: "Products", icon: Package },
     { href: "/dashboard/inventory", label: "Inventory", icon: Layers },
     { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
     { href: "/dashboard/customers", label: "Customers", icon: Users },
-    { href: "/dashboard/categories", label: "Categories", icon: FolderTree },
-    { href: "/dashboard/brands", label: "Brands", icon: Tag },
     { href: "/dashboard/collections", label: "Collections", icon: Layers2 },
     {
       href: "/dashboard/deals-coupons",
