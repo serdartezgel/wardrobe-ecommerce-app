@@ -9,3 +9,11 @@ export type ProductWithRelations = Prisma.ProductGetPayload<{
     productOptions: true;
   };
 }>;
+
+export type CategoryWithChildren = Prisma.CategoryGetPayload<{
+  include: {
+    children: {
+      include: { children: true };
+    };
+  };
+}>;

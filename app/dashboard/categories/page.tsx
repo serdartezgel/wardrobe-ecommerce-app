@@ -1,8 +1,12 @@
 import Link from "next/link";
 
+import CategoryTree from "@/components/dashboard/CategoryTree";
 import { Button } from "@/components/ui/button";
+import { getAllCategories } from "@/lib/actions/category.action";
 
-const CategoriesPage = () => {
+const CategoriesPage = async () => {
+  const result = await getAllCategories(true);
+
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -19,6 +23,10 @@ const CategoriesPage = () => {
           </Link>
         </Button>
       </header>
+
+      <div className="bg-muted border-border rounded-lg border p-4">
+        <CategoryTree categories={result.data || []} />
+      </div>
     </div>
   );
 };

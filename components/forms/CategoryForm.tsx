@@ -3,8 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, Trash2Icon, UploadIcon } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
+import { createCategory, updateCategory } from "@/lib/actions/category.action";
 import {
   CategoryInput,
   categorySchema,
@@ -24,7 +28,7 @@ import { Textarea } from "../ui/textarea";
 
 interface CategoryFormProps {
   initialData?: Partial<CategoryInput>;
-  parentId?: string;
+  parentId?: string | null;
   isEditing?: boolean;
 }
 
@@ -33,26 +37,63 @@ const CategoryForm = ({
   parentId,
   isEditing,
 }: CategoryFormProps) => {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const form = useForm<CategoryInput>({
     resolver: zodResolver(categorySchema),
     defaultValues: initialData || {
       name: "",
-      description: undefined,
-      image: undefined,
+      description: "",
+      image: null,
       isActive: true,
       order: 0,
-      parentId: null,
+      parentId,
       metaTitle: "",
       metaDescription: "",
     },
   });
 
   const handleSubmit = async (data: CategoryInput) => {
-    if (parentId) {
-      console.log("Creating a new sub category");
-    }
-    console.log("Submitting:", { ...data });
-    // Call your server action here
+    startTransition(async () => {
+      if (isEditing && initialData) {
+        const result = await updateCategory({
+          id: data.id,
+          ...data,
+        });
+
+        if (result.success) {
+          toast.success("Success", {
+            description: "Category updated successfully.",
+          });
+
+          if (result.data) router.push("/dashboard/categories");
+        } else {
+          toast.error(`Error ${result.status}`, {
+            description: result.error?.message || "Something went wrong.",
+          });
+        }
+
+        return;
+      }
+
+      const result = await createCategory({
+        parentId: parentId ?? null,
+        ...data,
+      });
+
+      if (result.success) {
+        toast.success("Success", {
+          description: "Category created successfully.",
+        });
+
+        router.push("/dashboard/categories");
+      } else {
+        toast.error(`Error ${result.status}`, {
+          description: result.error?.message || "Something went wrong.",
+        });
+      }
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,11 +183,11 @@ const CategoryForm = ({
               className="hidden"
               onChange={handleImageUpload}
             />
-          </div>
 
-          {form.formState.errors.image && (
-            <FieldError errors={[form.formState.errors.image]} />
-          )}
+            {form.formState.errors.image && (
+              <FieldError errors={[form.formState.errors.image]} />
+            )}
+          </div>
 
           {form.watch("image") && (
             <div className="group relative w-fit">
@@ -165,7 +206,7 @@ const CategoryForm = ({
                   variant="destructive"
                   className="h-8 w-8"
                   onClick={() =>
-                    form.setValue("image", undefined, { shouldValidate: true })
+                    form.setValue("image", null, { shouldValidate: true })
                   }
                 >
                   <Trash2Icon className="h-4 w-4" />
@@ -256,10 +297,10 @@ const CategoryForm = ({
       <Button
         type="submit"
         form="form-category"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isPending}
         className="flex-1"
       >
-        {isSubmitting ? (
+        {isSubmitting || isPending ? (
           <>
             <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
             Submitting...

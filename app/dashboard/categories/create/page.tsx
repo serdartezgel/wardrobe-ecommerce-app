@@ -1,6 +1,10 @@
 import CategoryForm from "@/components/forms/CategoryForm";
 
-const CreateCategoryPage = () => {
+const CreateCategoryPage = async ({ searchParams }: RouteParams) => {
+  const { c } = await searchParams;
+
+  console.log(c);
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4">
@@ -9,7 +13,7 @@ const CreateCategoryPage = () => {
       </header>
 
       <section>
-        <CategoryForm />
+        <CategoryForm parentId={c || null} />
       </section>
     </div>
   );
