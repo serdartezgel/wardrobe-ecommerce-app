@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -7,7 +8,7 @@ import { auth } from "@/lib/auth";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
+    headers: await headers(),
   });
 
   if (!session) {
