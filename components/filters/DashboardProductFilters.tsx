@@ -129,6 +129,7 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
                 .getColumn("status")
                 ?.setFilterValue(value === "all" ? "" : value)
             }
+            disabled={tableRows.length === 0}
           >
             <SelectTrigger className="no-focus">
               <SelectValue placeholder="Select status" />
@@ -151,6 +152,7 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
                 .getColumn("category")
                 ?.setFilterValue(value === "all" ? "" : value)
             }
+            disabled={tableRows.length === 0}
           >
             <SelectTrigger className="no-focus">
               <SelectValue placeholder="Select category" />
@@ -176,6 +178,7 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
                 .getColumn("brand")
                 ?.setFilterValue(value === "all" ? "" : value)
             }
+            disabled={tableRows.length === 0}
           >
             <SelectTrigger className="no-focus">
               <SelectValue placeholder="Select brand" />
@@ -245,6 +248,7 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
                     setPriceRange([value[0], value[1]]);
                     table.getColumn("basePrice")?.setFilterValue(value);
                   }}
+                  disabled={tableRows.length === 0}
                 />{" "}
                 <div className="text-muted-foreground flex justify-between text-sm">
                   {" "}
@@ -267,6 +271,7 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
                     //     ? "bg-primary text-primary-foreground"
                     //     : "bg-accent text-accent-foreground"
                     // }`}
+                    disabled={tableRows.length === 0}
                   >
                     {tag}
                     {/* {tags.includes(tag) && (

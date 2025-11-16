@@ -21,6 +21,7 @@ const TableSearch = <TData,>({ table }: DataTableProps<TData>) => {
         value={table.getState().globalFilter ?? ""}
         onChange={(e) => table.setGlobalFilter(String(e.target.value))}
         className="no-focus max-w-sm pr-10"
+        disabled={table.getCoreRowModel().rows.length === 0}
       />
       <SearchIcon
         onClick={() => inputRef.current?.focus()}

@@ -17,3 +17,18 @@ export type CategoryWithChildren = Prisma.CategoryGetPayload<{
     };
   };
 }>;
+
+export type BrandWithRelations = Prisma.BrandGetPayload<{
+  include: {
+    products: true;
+    promotions: true;
+  };
+}>;
+
+export type BrandTable = Prisma.BrandGetPayload<{
+  include: {
+    _count: {
+      select: { products: true };
+    };
+  };
+}>;
