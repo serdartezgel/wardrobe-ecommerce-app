@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import z, { ZodError, ZodType } from "zod";
 
 import { auth, Session } from "../auth";
-import { PrismaClient } from "../generated/prisma";
 import { UnauthorizedError, ValidationError } from "../http-errors";
+import prisma from "../prisma";
 
 type ActionOptions<T> = {
   params?: T;
@@ -43,8 +43,6 @@ async function action<T>({
       return new UnauthorizedError();
     }
   }
-
-  const prisma = new PrismaClient();
 
   return { params, session, prisma };
 }

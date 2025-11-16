@@ -33,7 +33,6 @@ export async function createCategory(
     description,
     image,
     isActive,
-    order,
     parentId,
     metaTitle,
     metaDescription,
@@ -68,6 +67,16 @@ export async function createCategory(
     });
 
     if (existingCategory) throw new Error("Category already exists");
+
+    const existingOrder = await prisma.category.aggregate({
+      where: { parentId },
+      _max: {
+        order: true,
+      },
+    });
+
+    const order =
+      existingOrder._max.order !== null ? existingOrder._max.order + 1 : 0;
 
     const category = await prisma.category.create({
       data: {

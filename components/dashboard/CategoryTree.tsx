@@ -12,7 +12,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { deleteCategory } from "@/lib/actions/category.action";
+import {
+  deleteCategory,
+  reorderCategories,
+} from "@/lib/actions/category.action";
 import { CategoryWithChildren } from "@/types/prisma";
 
 import { Button } from "../ui/button";
@@ -41,7 +44,12 @@ const CategoryTree = ({
   return (
     <div className="flex max-w-lg flex-col gap-4 px-4">
       {categories.map((cat) => (
-        <CategoryNode key={cat.id} category={cat} level={1} />
+        <CategoryNode
+          key={cat.id}
+          category={cat}
+          siblings={categories}
+          level={1}
+        />
       ))}
     </div>
   );
@@ -49,9 +57,11 @@ const CategoryTree = ({
 
 const CategoryNode = ({
   category,
+  siblings,
   level,
 }: {
   category: CategoryWithChildren;
+  siblings: CategoryWithChildren[];
   level: number;
 }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -62,6 +72,33 @@ const CategoryNode = ({
     if (result.success) {
       toast.success("Success", {
         description: "Category deleted successfully.",
+      });
+    } else {
+      toast.error(`Error ${result.status}`, {
+        description: result.error?.message || "Something went wrong.",
+      });
+    }
+  };
+
+  const handleMove = async (direction: "up" | "down") => {
+    const index = siblings.findIndex((s) => s.id === category.id);
+    if (index === -1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+
+    const updated = siblings.map((s) => ({ id: s.id, order: s.order }));
+
+    const temp = updated[index].order;
+    updated[index].order = updated[targetIndex].order;
+    updated[targetIndex].order = temp;
+
+    const result = await reorderCategories(updated);
+
+    if (result.success) {
+      toast.success("Success", {
+        description: "Categories reordered successfully.",
       });
     } else {
       toast.error(`Error ${result.status}`, {
@@ -171,6 +208,8 @@ const CategoryNode = ({
                 <Button
                   variant={"link"}
                   className="text-muted-foreground cursor-pointer"
+                  disabled={category.order === 0}
+                  onClick={() => handleMove("up")}
                 >
                   <ChevronUpIcon className="size-5" />
                   <span className="sr-only">Move up</span>
@@ -185,6 +224,8 @@ const CategoryNode = ({
                 <Button
                   variant={"link"}
                   className="text-muted-foreground cursor-pointer"
+                  disabled={category.order === siblings.length - 1}
+                  onClick={() => handleMove("down")}
                 >
                   <ChevronDownIcon className="size-5" />
                   <span className="sr-only">Move down</span>
@@ -203,6 +244,7 @@ const CategoryNode = ({
             <div key={child.id} className="flex flex-col pl-8">
               <CategoryNode
                 category={child as CategoryWithChildren}
+                siblings={category.children as CategoryWithChildren[]}
                 level={level + 1}
               />
             </div>
