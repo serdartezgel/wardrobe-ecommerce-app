@@ -103,7 +103,7 @@ const CategoryTree = ({
       onDragCancel={() => setActiveId(null)}
     >
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
-        <div className="flex max-w-lg flex-col gap-4 px-4">
+        <div className="flex flex-col justify-center gap-12 px-4">
           {categories.map((cat) => (
             <CategoryNode key={cat.id} category={cat} level={1} />
           ))}
@@ -198,29 +198,25 @@ const CategoryNode = ({ category, level }: CategoryNodeProps) => {
         onOpenChange={setIsOpen}
         className="flex flex-col gap-4"
       >
-        <div className="hover:bg-secondary relative flex items-center justify-between rounded-bl-lg border-b border-l px-4 py-2">
-          <h2 className="pl-8 text-lg font-semibold">{category.name}</h2>
-          {category.children && category.children.length > 0 && (
-            <CollapsibleTrigger asChild>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="link"
-                    size="icon"
-                    className="absolute left-2 size-8 cursor-pointer"
-                  >
-                    <ChevronsUpDownIcon className="size-5" />
-                    <span className="sr-only">
-                      {isOpen ? "Collapse" : "Expand"}
-                    </span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isOpen ? "Collapse" : "Expand"}</p>
-                </TooltipContent>
-              </Tooltip>
-            </CollapsibleTrigger>
-          )}
+        <div className="hover:bg-secondary flex items-center justify-between rounded-bl-lg border-b border-l p-2">
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  {...attributes}
+                  {...listeners}
+                  variant={"link"}
+                  className="flex cursor-grab items-center justify-center active:cursor-grabbing"
+                >
+                  <GripVerticalIcon className="size-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Drag & Drop</p>
+              </TooltipContent>
+            </Tooltip>
+            <h2 className="text-lg font-semibold">{category.name}</h2>
+          </div>
           <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -289,21 +285,27 @@ const CategoryNode = ({ category, level }: CategoryNodeProps) => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  {...attributes}
-                  {...listeners}
-                  variant={"link"}
-                  className="flex cursor-grab items-center justify-center active:cursor-grabbing"
-                >
-                  <GripVerticalIcon className="size-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Drag & Drop</p>
-              </TooltipContent>
-            </Tooltip>
+            {category.children && category.children.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="link"
+                      size="icon"
+                      className="size-8 cursor-pointer"
+                    >
+                      <ChevronsUpDownIcon className="size-5" />
+                      <span className="sr-only">
+                        {isOpen ? "Collapse" : "Expand"}
+                      </span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isOpen ? "Collapse" : "Expand"}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
         {category.children && category.children.length > 0 && (

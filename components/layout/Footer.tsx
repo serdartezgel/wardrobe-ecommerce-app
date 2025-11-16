@@ -6,7 +6,7 @@ import { footerLinks, socialLinks } from "@/lib/constants/footerLinks";
 
 const Footer = () => {
   return (
-    <footer className="border-border bg-background/50 border-t backdrop-blur">
+    <footer className="border-border bg-muted border-t">
       <div className="mx-auto max-w-7xl px-6 py-12 sm:px-8">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           {footerLinks.map((section) => (

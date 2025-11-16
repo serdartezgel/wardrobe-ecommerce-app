@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, EyeIcon, MenuIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, MenuIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -19,9 +19,17 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { navLinks } from "@/lib/constants/navLinks";
+import { dealIcon } from "@/lib/constants/dealIcons";
+import { Promotion } from "@/lib/generated/prisma";
+import { CategoryWithChildren } from "@/types/prisma";
 
-const MobileNav = () => {
+const MobileNav = ({
+  categories,
+  deals,
+}: {
+  categories: CategoryWithChildren[];
+  deals: Promotion[];
+}) => {
   return (
     <Drawer direction="left">
       <DrawerTrigger asChild>
@@ -49,43 +57,59 @@ const MobileNav = () => {
           className="w-full px-4"
           defaultValue="deals"
         >
-          {navLinks.map((section) => (
-            <AccordionItem
-              key={section.label.toLowerCase()}
-              value={section.label.toLowerCase()}
-            >
-              <AccordionTrigger className="font-space-grotesk hover:text-primary text-base underline-offset-8">
-                {section.label.toUpperCase()}
+          <AccordionItem value="deals">
+            <AccordionTrigger className="font-space-grotesk hover:text-primary text-base uppercase underline-offset-8">
+              DEALS
+            </AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4 px-4">
+              {deals.map((deal) => {
+                const Icon = dealIcon[deal.type];
+                return (
+                  <Link
+                    key={deal.id}
+                    href={`/deals/${deal.id}`}
+                    className="hover:text-primary flex items-center justify-between underline-offset-8 hover:underline"
+                  >
+                    <div className="flex items-center gap-2 capitalize">
+                      <Icon className="text-primary" />
+                      {deal.name}
+                    </div>
+                    <ArrowRightIcon className="size-5" />
+                  </Link>
+                );
+              })}
+              <Link
+                href={`/deals`}
+                className="hover:text-primary flex items-center justify-between pl-2 capitalize underline-offset-8 hover:underline"
+              >
+                View All
+                <ArrowRightIcon className="size-5" />
+              </Link>
+            </AccordionContent>
+          </AccordionItem>
+          {categories.map((category) => (
+            <AccordionItem key={category.id} value={category.slug}>
+              <AccordionTrigger className="font-space-grotesk hover:text-primary text-base uppercase underline-offset-8">
+                {category.name}
               </AccordionTrigger>
 
               <AccordionContent className="flex flex-col gap-4 px-4">
-                {section.children!.map((child) => (
+                {category.children!.map((child) => (
                   <Link
-                    key={child.href}
-                    href={child.href}
-                    className="hover:text-primary flex items-center justify-between underline-offset-8 hover:underline"
+                    key={child.id}
+                    href={`/${category.slug}/${child.slug}`}
+                    className="hover:text-primary flex items-center justify-between capitalize underline-offset-8 hover:underline"
                   >
-                    <div className="flex items-center gap-2">
-                      {child.icon ? (
-                        <child.icon className="text-primary size-5" />
-                      ) : (
-                        <></>
-                      )}
-
-                      {child.label}
-                    </div>
+                    {child.name}
                     <ArrowRightIcon className="size-5" />
                   </Link>
                 ))}
 
                 <Link
-                  href={section.href}
-                  className="hover:text-primary flex items-center justify-between underline-offset-8 hover:underline"
+                  href={`/${category.slug}`}
+                  className="hover:text-primary flex items-center justify-between pl-2 capitalize underline-offset-8 hover:underline"
                 >
-                  <div className="flex items-center gap-2">
-                    <EyeIcon className="text-primary size-5" />
-                    View All
-                  </div>
+                  View All
                   <ArrowRightIcon className="size-5" />
                 </Link>
               </AccordionContent>
