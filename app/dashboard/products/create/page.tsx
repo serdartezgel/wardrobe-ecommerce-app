@@ -1,6 +1,13 @@
 import ProductForm from "@/components/forms/ProductForm";
+import { getAllBrands } from "@/lib/actions/brand.action";
+import { getAllCategories } from "@/lib/actions/category.action";
 
-const CreateProductPage = () => {
+const CreateProductPage = async () => {
+  const [categories, brands] = await Promise.all([
+    getAllCategories(true),
+    getAllBrands(true),
+  ]);
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4">
@@ -12,7 +19,10 @@ const CreateProductPage = () => {
       </header>
 
       <section>
-        <ProductForm />
+        <ProductForm
+          categories={categories.data || []}
+          brands={brands.data || []}
+        />
       </section>
     </div>
   );

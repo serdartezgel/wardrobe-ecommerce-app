@@ -97,6 +97,11 @@ const BrandForm = ({ initialData, isEditing }: BrandFormProps) => {
     <form
       id="form-brand"
       onSubmit={form.handleSubmit(handleSubmit)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+          e.preventDefault();
+        }
+      }}
       className="flex flex-col gap-4"
     >
       <FieldGroup>

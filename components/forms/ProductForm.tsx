@@ -23,6 +23,7 @@ import {
   productSchema,
   VariantOption,
 } from "@/lib/validations/product.validation";
+import { BrandWithRelations, CategoryWithChildren } from "@/types/prisma";
 
 import ProductPreview from "../dashboard/ProductPreview";
 import FilterBadge from "../filters/FilterBadge";
@@ -54,28 +55,19 @@ import {
 } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 
-const mockCategories = [
-  { id: "1", name: "T-Shirts", slug: "t-shirts" },
-  { id: "2", name: "Hoodies", slug: "hoodies" },
-  { id: "3", name: "Jeans", slug: "jeans" },
-  { id: "4", name: "Jackets", slug: "jackets" },
-  { id: "5", name: "Accessories", slug: "accessories" },
-];
-
-const mockBrands = [
-  { id: "1", name: "Nike", slug: "nike" },
-  { id: "2", name: "Adidas", slug: "adidas" },
-  { id: "3", name: "Puma", slug: "puma" },
-  { id: "4", name: "Under Armour", slug: "under-armour" },
-  { id: "5", name: "Reebok", slug: "reebok" },
-];
-
 interface ProductFormProps {
   initialData?: Partial<ProductInput>;
   isEditing?: boolean;
+  categories: CategoryWithChildren[];
+  brands: BrandWithRelations[];
 }
 
-const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
+const ProductForm = ({
+  initialData,
+  isEditing = false,
+  categories,
+  brands,
+}: ProductFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -116,6 +108,150 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
     control: form.control,
     name: "variants",
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const currentCount = imageFields.length;
+
+    if (currentCount >= 8) {
+      form.setError("images", {
+        type: "manual",
+        message: "You can add a maximum of 8 images.",
+      });
+      return;
+    }
+
+    const allowed = 8 - currentCount;
+    const filesToAdd = Array.from(files).slice(0, allowed);
+
+    filesToAdd.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const url = reader.result as string;
+        appendImage({
+          url,
+          altText: file.name,
+          order: imageFields.length,
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (files.length > allowed) {
+      form.setError("images", {
+        type: "manual",
+        message: "You can add a maximum of 8 images.",
+      });
+    }
+  };
+
+  const handleInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    field: { value: string[] },
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const tagInput = e.currentTarget.value.trim();
+
+      if (tagInput && tagInput.length < 15 && !field.value.includes(tagInput)) {
+        form.setValue("tags", [...field.value, tagInput], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        e.currentTarget.value = "";
+        form.clearErrors("tags");
+      } else if (tagInput.length > 15) {
+        form.setError("tags", {
+          type: "manual",
+          message: "Tag should be less than 15 characters.",
+        });
+      } else if (field.value.includes(tagInput)) {
+        form.setError("tags", {
+          type: "manual",
+          message: "Tag already exists.",
+        });
+      }
+    }
+  };
+
+  const handleTagRemove = (tag: string, field: { value: string[] }) => {
+    const newTags = field.value.filter((t) => t !== tag);
+
+    form.setValue("tags", newTags, { shouldValidate: true, shouldDirty: true });
+
+    if (newTags.length === 0) {
+      form.setError("tags", {
+        type: "manual",
+        message: "Tags are required.",
+      });
+    }
+  };
+
+  const addOptionValue = (optionIndex: number, value: string) => {
+    const currentValues = form.getValues(
+      `productOptions.${optionIndex}.values`,
+    );
+    if (value && !currentValues.includes(value)) {
+      form.setValue(`productOptions.${optionIndex}.values`, [
+        ...currentValues,
+        value,
+      ]);
+    }
+  };
+
+  const removeOptionValue = (optionIndex: number, valueIndex: number) => {
+    const currentValues = form.getValues(
+      `productOptions.${optionIndex}.values`,
+    );
+    form.setValue(
+      `productOptions.${optionIndex}.values`,
+      currentValues.filter((_, i) => i !== valueIndex),
+    );
+  };
+
+  const generateVariants = () => {
+    const options = form.getValues("productOptions");
+    if (!options || options.length === 0) return;
+
+    const combinations: {
+      optionId: string;
+      optionName: string;
+      value: string;
+    }[][] = [];
+
+    const generate = (index: number, current: VariantOption[]) => {
+      if (index === options.length) {
+        combinations.push([...current]);
+        return;
+      }
+
+      options[index].values.forEach((value) => {
+        generate(index + 1, [
+          ...current,
+          {
+            optionId: `temp-${index}`,
+            optionName: options[index].name,
+            value,
+          },
+        ]);
+      });
+    };
+
+    generate(0, []);
+
+    const newVariants = combinations.map((combo, index) => ({
+      sku: `SKU-${Date.now()}-${index}`,
+      stock: 0,
+      price: parseFloat(form.getValues("basePrice") || "0"),
+      compareAtPrice: null,
+      image: null,
+      variantOptions: combo,
+    }));
+
+    form.setValue("variants", newVariants);
+  };
 
   const handlePublish = async (data: ProductInput) => {
     startTransition(async () => {
@@ -198,147 +334,6 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const currentCount = imageFields.length;
-
-    if (currentCount >= 8) {
-      form.setError("images", {
-        type: "manual",
-        message: "You can add a maximum of 8 images.",
-      });
-      return;
-    }
-
-    const allowed = 8 - currentCount;
-    const filesToAdd = Array.from(files).slice(0, allowed);
-
-    filesToAdd.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const url = reader.result as string;
-        appendImage({
-          url,
-          altText: file.name,
-          order: imageFields.length,
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-
-    if (files.length > allowed) {
-      form.setError("images", {
-        type: "manual",
-        message: "You can add a maximum of 8 images.",
-      });
-    }
-  };
-
-  const handleInputKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    field: { value: string[] },
-  ) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const tagInput = e.currentTarget.value.trim();
-
-      if (tagInput && tagInput.length < 15 && !field.value.includes(tagInput)) {
-        form.setValue("tags", [...field.value, tagInput]);
-        e.currentTarget.value = "";
-        form.clearErrors("tags");
-      } else if (tagInput.length > 15) {
-        form.setError("tags", {
-          type: "manual",
-          message: "Tag should be less than 15 characters.",
-        });
-      } else if (field.value.includes(tagInput)) {
-        form.setError("tags", {
-          type: "manual",
-          message: "Tag already exists.",
-        });
-      }
-    }
-  };
-
-  const handleTagRemove = (tag: string, field: { value: string[] }) => {
-    const newTags = field.value.filter((t) => t !== tag);
-
-    form.setValue("tags", newTags);
-
-    if (newTags.length === 0) {
-      form.setError("tags", {
-        type: "manual",
-        message: "Tags are required.",
-      });
-    }
-  };
-
-  const addOptionValue = (optionIndex: number, value: string) => {
-    const currentValues = form.getValues(
-      `productOptions.${optionIndex}.values`,
-    );
-    if (value && !currentValues.includes(value)) {
-      form.setValue(`productOptions.${optionIndex}.values`, [
-        ...currentValues,
-        value,
-      ]);
-    }
-  };
-
-  const removeOptionValue = (optionIndex: number, valueIndex: number) => {
-    const currentValues = form.getValues(
-      `productOptions.${optionIndex}.values`,
-    );
-    form.setValue(
-      `productOptions.${optionIndex}.values`,
-      currentValues.filter((_, i) => i !== valueIndex),
-    );
-  };
-
-  const generateVariants = () => {
-    const options = form.getValues("productOptions");
-    if (!options || options.length === 0) return;
-
-    const combinations: {
-      optionId: string;
-      optionName: string;
-      value: string;
-    }[][] = [];
-
-    const generate = (index: number, current: VariantOption[]) => {
-      if (index === options.length) {
-        combinations.push([...current]);
-        return;
-      }
-
-      options[index].values.forEach((value) => {
-        generate(index + 1, [
-          ...current,
-          {
-            optionId: `temp-${index}`,
-            optionName: options[index].name,
-            value,
-          },
-        ]);
-      });
-    };
-
-    generate(0, []);
-
-    const newVariants = combinations.map((combo, index) => ({
-      sku: `SKU-${Date.now()}-${index}`,
-      stock: 0,
-      price: parseFloat(form.getValues("basePrice") || "0"),
-      compareAtPrice: null,
-      image: null,
-      variantOptions: combo,
-    }));
-
-    form.setValue("variants", newVariants);
-  };
-
   const { isSubmitting } = form.formState;
 
   return (
@@ -357,6 +352,11 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
             className="flex w-full flex-col gap-6"
             id="form-product"
             onSubmit={form.handleSubmit(handlePublish)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+                e.preventDefault();
+              }
+            }}
           >
             <div className="bg-muted border-border flex flex-col gap-4 rounded-lg border p-4">
               <h2 className="text-xl font-bold">Basic Information</h2>
@@ -435,7 +435,7 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Brand</SelectLabel>
-                              {mockBrands.map((brand) => (
+                              {brands.map((brand) => (
                                 <SelectItem key={brand.id} value={brand.id}>
                                   {brand.name}
                                 </SelectItem>
@@ -470,17 +470,32 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>Category</SelectLabel>
-                              {mockCategories.map((category) => (
-                                <SelectItem
-                                  key={category.id}
-                                  value={category.id}
-                                >
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
+                            {categories.map((cat) => (
+                              <SelectGroup key={cat.id}>
+                                <SelectLabel>{cat.name}</SelectLabel>
+                                {cat.children &&
+                                  cat.children.length > 0 &&
+                                  cat.children.map((child) => (
+                                    <SelectGroup
+                                      key={child.id}
+                                      className="pl-2"
+                                    >
+                                      <SelectLabel>{child.name}</SelectLabel>
+                                      {child.children &&
+                                        child.children.length > 0 &&
+                                        child.children.map((c) => (
+                                          <SelectItem
+                                            key={c.id}
+                                            value={c.id}
+                                            className="ml-2"
+                                          >
+                                            {c.name}
+                                          </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                  ))}
+                              </SelectGroup>
+                            ))}
                           </SelectContent>
                         </Select>
                         {fieldState.invalid && (
@@ -497,8 +512,6 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-product-tags">Tags</FieldLabel>
                       <Input
-                        {...field}
-                        id="form-product-tags"
                         placeholder="Type and press Enter to add tags"
                         type="text"
                         onKeyDown={(e) => handleInputKeyDown(e, field)}
@@ -508,7 +521,7 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
                       />
                       {field.value.length > 0 && (
                         <div className="flex flex-wrap gap-2.5">
-                          {field?.value?.map((tag: string) => (
+                          {field.value.map((tag: string) => (
                             <FilterBadge
                               key={tag}
                               label={`Tag: ${tag}`}
@@ -1018,6 +1031,7 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
 
             <div className="flex flex-col gap-4 md:flex-row">
               <Button
+                type="button"
                 variant={"secondary"}
                 disabled={isSubmitting || isPending}
                 className="flex-1"
