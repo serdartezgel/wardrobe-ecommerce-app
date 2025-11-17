@@ -12,8 +12,12 @@ import {
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
+import { createProduct, updateProduct } from "@/lib/actions/product.action";
 import {
   ProductInput,
   productSchema,
@@ -72,6 +76,9 @@ interface ProductFormProps {
 }
 
 const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const form = useForm<ProductInput>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData || {
@@ -111,21 +118,104 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
   });
 
   const handlePublish = async (data: ProductInput) => {
-    console.log("Publishing:", { ...data, status: "PUBLISHED" });
-    // Call your server action here
+    startTransition(async () => {
+      if (isEditing && initialData) {
+        const result = await updateProduct({
+          ...data,
+          id: data.id,
+          status: "PUBLISHED",
+        });
+
+        if (result.success) {
+          toast.success("Success", {
+            description: "Product updated successfully.",
+          });
+
+          if (result.data) router.push("/dashboard/products");
+        } else {
+          toast.error(`Error ${result.status}`, {
+            description: result.error?.message || "Something went wrong.",
+          });
+        }
+
+        return;
+      }
+
+      const result = await createProduct({ ...data, status: "PUBLISHED" });
+
+      if (result.success) {
+        toast.success("Success", {
+          description: "Product published successfully.",
+        });
+
+        router.push("/dashboard/products");
+      } else {
+        toast.error(`Error ${result.status}`, {
+          description: result.error?.message || "Something went wrong.",
+        });
+      }
+    });
   };
 
   const handleSaveAsDraft = async () => {
     const data = form.getValues();
-    console.log("Saving as draft:", { ...data, status: "DRAFT" });
-    // Call your server action here
+    startTransition(async () => {
+      if (isEditing && initialData) {
+        const result = await updateProduct({
+          ...data,
+          id: data.id,
+          status: "DRAFT",
+        });
+
+        if (result.success) {
+          toast.success("Success", {
+            description: "Product updated successfully.",
+          });
+
+          if (result.data) router.push("/dashboard/products");
+        } else {
+          toast.error(`Error ${result.status}`, {
+            description: result.error?.message || "Something went wrong.",
+          });
+        }
+
+        return;
+      }
+
+      const result = await createProduct({ ...data, status: "DRAFT" });
+
+      if (result.success) {
+        toast.success("Success", {
+          description: "Product saved as a draft successfully.",
+        });
+
+        router.push("/dashboard/products");
+      } else {
+        toast.error(`Error ${result.status}`, {
+          description: result.error?.message || "Something went wrong.",
+        });
+      }
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
+    const currentCount = imageFields.length;
+
+    if (currentCount >= 8) {
+      form.setError("images", {
+        type: "manual",
+        message: "You can add a maximum of 8 images.",
+      });
+      return;
+    }
+
+    const allowed = 8 - currentCount;
+    const filesToAdd = Array.from(files).slice(0, allowed);
+
+    filesToAdd.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const url = reader.result as string;
@@ -137,6 +227,13 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
       };
       reader.readAsDataURL(file);
     });
+
+    if (files.length > allowed) {
+      form.setError("images", {
+        type: "manual",
+        message: "You can add a maximum of 8 images.",
+      });
+    }
   };
 
   const handleInputKeyDown = (
@@ -590,7 +687,7 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
               <h2 className="text-xl font-bold">Product Images *</h2>
               <p className="text-muted-foreground">
                 Add and organize product images to showcase your product
-                visually.
+                visually. You can add a maximum of 8 images.
               </p>
 
               <FieldGroup>
@@ -613,11 +710,10 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
                     className="hidden"
                     onChange={handleImageUpload}
                   />
+                  {form.formState.errors.images && (
+                    <FieldError errors={[form.formState.errors.images]} />
+                  )}
                 </div>
-
-                {form.formState.errors.images && (
-                  <FieldError errors={[form.formState.errors.images]} />
-                )}
 
                 {imageFields.length > 0 && (
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -923,11 +1019,11 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
             <div className="flex flex-col gap-4 md:flex-row">
               <Button
                 variant={"secondary"}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isPending}
                 className="flex-1"
                 onClick={handleSaveAsDraft}
               >
-                {isSubmitting ? (
+                {isSubmitting || isPending ? (
                   <>
                     <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
@@ -939,10 +1035,10 @@ const ProductForm = ({ initialData, isEditing = false }: ProductFormProps) => {
               <Button
                 type="submit"
                 form="form-product"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isPending}
                 className="flex-1"
               >
-                {isSubmitting ? (
+                {isSubmitting || isPending ? (
                   <>
                     <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                     Publishing...

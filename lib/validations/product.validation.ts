@@ -63,7 +63,8 @@ export const productSchema = z
     // Images
     images: z
       .array(productImageSchema)
-      .min(1, "At least one product image is required"),
+      .min(1, "At least one product image is required")
+      .max(8, "You can add a maximum of 8 images"),
 
     // Options (Size, Color, etc.)
     productOptions: z

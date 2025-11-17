@@ -3,14 +3,18 @@
 import { Row, type Table as TanstackTable } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 
+import { ProductWithRelations } from "@/types/prisma";
+
 import { Button } from "../ui/button";
 
 interface DataTableProps<TData> {
   table: TanstackTable<TData>;
 }
 
-const ProductBulkActions = <TData,>({ table }: DataTableProps<TData>) => {
-  const [selected, setSelected] = useState<Row<TData>[]>([]);
+const ProductBulkActions = ({
+  table,
+}: DataTableProps<ProductWithRelations>) => {
+  const [selected, setSelected] = useState<Row<ProductWithRelations>[]>([]);
 
   const tableRows = table.getSelectedRowModel().rows;
 
@@ -23,12 +27,22 @@ const ProductBulkActions = <TData,>({ table }: DataTableProps<TData>) => {
     (row) => row.getValue<boolean>("status") === true,
   );
 
-  const bulkActionLabel = allActive ? "Deactivate" : "Activate";
+  const allPublished = selected.every(
+    (row) => row.original.status === "PUBLISHED",
+  );
+
+  const activateButtonLabel = allActive ? "Deactivate" : "Activate";
 
   return (
     <div className="bg-muted border-border w-fit rounded-lg border px-4 py-4 shadow-sm">
       <div className="flex flex-wrap gap-3">
-        <Button disabled={selected.length === 0}>{bulkActionLabel}</Button>
+        <Button
+          disabled={selected.length === 0 || allPublished}
+          className="bg-cyan-500 hover:bg-cyan-500/80"
+        >
+          Publish
+        </Button>
+        <Button disabled={selected.length === 0}>{activateButtonLabel}</Button>
         <Button variant={"destructive"} disabled={selected.length === 0}>
           Delete
         </Button>
