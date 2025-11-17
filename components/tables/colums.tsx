@@ -11,6 +11,16 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -150,18 +160,58 @@ export const getProductColumns = (): ColumnDef<ProductWithRelations>[] => [
         <DropdownMenuContent align="end">
           <DropdownMenuLabel className="sr-only">Actions</DropdownMenuLabel>
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/products/${row.original.slug}`}>
-              View Details
-            </Link>
+            <Button
+              variant={"ghost"}
+              className="w-full justify-start pl-2"
+              asChild
+            >
+              <Link href={`/dashboard/products/${row.original.slug}`}>
+                View Details
+              </Link>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/products/edit/${row.original.slug}`}>
-              Edit
-            </Link>
+            <Button
+              variant={"ghost"}
+              className="w-full justify-start pl-2"
+              asChild
+            >
+              <Link href={`/dashboard/products/${row.original.slug}/edit`}>
+                Edit
+              </Link>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant={"ghost"}
+                  className="text-destructive hover:text-destructive w-full justify-start pl-2"
+                >
+                  Delete
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. Are you sure you want to
+                    permanently delete this product?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant={"secondary"}>Cancel</Button>
+                  </DialogClose>
+                  <Button variant={"destructive"} onClick={() => {}}>
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
@@ -274,18 +324,58 @@ export const getBrandColumns = (): ColumnDef<BrandTable>[] => [
         <DropdownMenuContent align="end">
           <DropdownMenuLabel className="sr-only">Actions</DropdownMenuLabel>
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/products/${row.original.slug}`}>
-              View Details
-            </Link>
+            <Button
+              variant={"ghost"}
+              className="w-full justify-start pl-2"
+              asChild
+            >
+              <Link href={`/dashboard/products/${row.original.slug}`}>
+                View Details
+              </Link>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/products/edit/${row.original.slug}`}>
-              Edit
-            </Link>
+            <Button
+              variant={"ghost"}
+              className="w-full justify-start pl-2"
+              asChild
+            >
+              <Link href={`/dashboard/brands/${row.original.slug}/edit`}>
+                Edit
+              </Link>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant={"ghost"}
+                  className="text-destructive hover:text-destructive w-full justify-start pl-2"
+                >
+                  Delete
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. Are you sure you want to
+                    permanently delete this brand?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant={"secondary"}>Cancel</Button>
+                  </DialogClose>
+                  <Button variant={"destructive"} onClick={() => {}}>
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

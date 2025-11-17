@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 
 import CategoryForm from "@/components/forms/CategoryForm";
-import { getCategory } from "@/lib/actions/category.action";
+import { getCategoryBySlug } from "@/lib/actions/category.action";
 import { CategoryInput } from "@/lib/validations/category.validation";
 
 const CategoryEditPage = async ({ params }: RouteParams) => {
-  const { id } = await params;
+  const { slug } = await params;
 
-  const result = await getCategory(id);
+  const result = await getCategoryBySlug(slug);
 
   if (!result.success) return notFound();
 

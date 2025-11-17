@@ -279,7 +279,10 @@ const CategoryNode = ({ category, level }: CategoryNodeProps) => {
                   <DialogClose asChild>
                     <Button variant={"secondary"}>Cancel</Button>
                   </DialogClose>
-                  <Button onClick={() => handleDelete(category.id)}>
+                  <Button
+                    variant={"destructive"}
+                    onClick={() => handleDelete(category.id)}
+                  >
                     Confirm
                   </Button>
                 </DialogFooter>

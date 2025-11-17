@@ -278,7 +278,7 @@ export async function deleteCategory(
   }
 }
 
-export async function getCategory(id: string): Promise<
+export async function getCategoryBySlug(slug: string): Promise<
   ActionResponse<
     Category & {
       children: (Category & { children: Category[] })[];
@@ -287,8 +287,8 @@ export async function getCategory(id: string): Promise<
   >
 > {
   const validationResult = await action({
-    params: { id },
-    schema: z.object({ id: z.string().min(1) }),
+    params: { slug },
+    schema: z.object({ slug: z.string().min(1) }),
   });
 
   if (validationResult instanceof Error) {
@@ -299,7 +299,7 @@ export async function getCategory(id: string): Promise<
 
   try {
     const category = await prisma.category.findUnique({
-      where: { id },
+      where: { slug },
       include: {
         children: {
           orderBy: { order: "asc" },
