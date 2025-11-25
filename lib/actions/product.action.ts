@@ -486,11 +486,11 @@ export async function deleteProduct(
 }
 
 export async function getProductForEdit(
-  id: string,
+  slug: string,
 ): Promise<ActionResponse<ProductInput>> {
   const validationResult = await action({
-    params: { id },
-    schema: z.object({ id: z.string().min(1) }),
+    params: { slug },
+    schema: z.object({ slug: z.string().min(1) }),
     authorize: true,
   });
 
@@ -502,7 +502,7 @@ export async function getProductForEdit(
 
   try {
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { slug },
       include: {
         brand: true,
         category: true,
@@ -560,6 +560,7 @@ export async function getProductForEdit(
           value: vo.value,
         })),
       })),
+      id: product.id,
     };
 
     return {

@@ -13,11 +13,16 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import {
+  bulkUploadToCloudinary,
+  deleteFromCloudinary,
+} from "@/lib/actions/image.action";
 import { createProduct, updateProduct } from "@/lib/actions/product.action";
+import logger from "@/lib/logger";
 import {
   ProductInput,
   productSchema,
@@ -70,6 +75,7 @@ const ProductForm = ({
 }: ProductFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<ProductInput>({
     resolver: zodResolver(productSchema),
@@ -109,9 +115,9 @@ const ProductForm = ({
     name: "variants",
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     const currentCount = imageFields.length;
 
@@ -124,27 +130,76 @@ const ProductForm = ({
     }
 
     const allowed = 8 - currentCount;
-    const filesToAdd = Array.from(files).slice(0, allowed);
+    const filesToUpload = Array.from(files).slice(0, allowed);
 
-    filesToAdd.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const url = reader.result as string;
-        appendImage({
-          url,
-          altText: file.name,
-          order: imageFields.length,
+    setIsUploading(true);
+
+    try {
+      const base64Files = await Promise.all(
+        filesToUpload.map((file) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }),
+      );
+
+      const result = await bulkUploadToCloudinary({
+        files: base64Files,
+        folder: "products",
+      });
+
+      if (result.success && result.data) {
+        result.data.forEach((image, index) => {
+          appendImage({
+            url: image.url,
+            altText: filesToUpload[index].name,
+            order: imageFields.length + index,
+          });
         });
-      };
-      reader.readAsDataURL(file);
-    });
+
+        toast.success("Images uploaded successfully");
+      } else {
+        toast.error("Failed to upload images", {
+          description: result.error?.message || "Something went wrong.",
+        });
+      }
+    } catch (error) {
+      logger.error(`Upload error: ${error}`);
+      toast.error("Failed to upload images");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
 
     if (files.length > allowed) {
-      form.setError("images", {
-        type: "manual",
-        message: "You can add a maximum of 8 images.",
+      toast.warning("Some images were not uploaded", {
+        description: "Maximum 8 images allowed",
       });
     }
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    const image = imageFields[index];
+
+    if (image.url.includes("cloudinary.com")) {
+      try {
+        const urlParts = image.url.split("/");
+        const uploadIndex = urlParts.indexOf("upload");
+        if (uploadIndex !== -1) {
+          const publicIdWithExt = urlParts.slice(uploadIndex + 2).join("/");
+          const publicId = publicIdWithExt.replace(/\.[^/.]+$/, "");
+
+          await deleteFromCloudinary(publicId);
+        }
+      } catch (error) {
+        logger.error(`Failed to delete from Cloudinary: ${error}`);
+      }
+    }
+
+    removeImage(index);
   };
 
   const handleInputKeyDown = (
@@ -258,7 +313,7 @@ const ProductForm = ({
       if (isEditing && initialData) {
         const result = await updateProduct({
           ...data,
-          id: data.id,
+          id: initialData.id,
           status: "PUBLISHED",
         });
 
@@ -708,12 +763,22 @@ const ProductForm = ({
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={isUploading || imageFields.length >= 8}
                     onClick={() =>
                       document.getElementById("image-upload")?.click()
                     }
                   >
-                    <UploadIcon className="mr-2 h-4 w-4" />
-                    Upload Images
+                    {isUploading ? (
+                      <>
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <UploadIcon className="mr-2 h-4 w-4" />
+                        Upload Images
+                      </>
+                    )}
                   </Button>
                   <input
                     id="image-upload"
@@ -722,6 +787,7 @@ const ProductForm = ({
                     multiple
                     className="hidden"
                     onChange={handleImageUpload}
+                    disabled={isUploading || imageFields.length >= 8}
                   />
                   {form.formState.errors.images && (
                     <FieldError errors={[form.formState.errors.images]} />
@@ -748,7 +814,8 @@ const ProductForm = ({
                             size="icon"
                             variant="destructive"
                             className="h-8 w-8"
-                            onClick={() => removeImage(index)}
+                            onClick={() => handleRemoveImage(index)}
+                            disabled={isUploading}
                           >
                             <Trash2Icon className="h-4 w-4" />
                           </Button>
@@ -756,7 +823,9 @@ const ProductForm = ({
                             type="button"
                             size="icon"
                             variant="outline"
-                            disabled={index === imageFields.length - 1}
+                            disabled={
+                              index === imageFields.length - 1 || isUploading
+                            }
                             onClick={() => moveImage(index, index + 1)}
                           >
                             <ArrowRightIcon className="size-4" />
@@ -765,7 +834,7 @@ const ProductForm = ({
                             type="button"
                             size="icon"
                             variant="outline"
-                            disabled={index === 0}
+                            disabled={index === 0 || isUploading}
                             onClick={() => moveImage(index, index - 1)}
                           >
                             <ArrowLeftIcon className="size-4" />
