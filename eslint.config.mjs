@@ -22,6 +22,7 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "lib/generated/**",
     ],
   },
   ...compat.extends(
@@ -29,7 +30,7 @@ const eslintConfig = [
     "next/typescript",
     "standard",
     // "plugin:tailwindcss/recommended",
-    "prettier"
+    "prettier",
   ),
   {
     rules: {

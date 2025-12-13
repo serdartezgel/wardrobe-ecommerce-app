@@ -4,7 +4,9 @@ import { ColumnDef, CoreRow } from "@tanstack/react-table";
 import { ArrowUpDownIcon, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 
+import { deleteBrand } from "@/lib/actions/brand.action";
 import { BrandTable, ProductWithRelations } from "@/types/prisma";
 
 import { Badge } from "../ui/badge";
@@ -66,7 +68,11 @@ export const getProductColumns = (): ColumnDef<ProductWithRelations>[] => [
         href={`/dashboard/products/${row.original.slug}`}
         className="hover:underline hover:underline-offset-4"
       >
-        {row.original.name}
+        {row.original.status === "PUBLISHED"
+          ? row.original.name
+          : row.original.status === "DRAFT"
+            ? row.original.name + " - Draft"
+            : row.original.name + " - Archived"}
       </Link>
     ),
     filterFn: "includesString",
@@ -329,7 +335,7 @@ export const getBrandColumns = (): ColumnDef<BrandTable>[] => [
               className="w-full justify-start pl-2"
               asChild
             >
-              <Link href={`/dashboard/products/${row.original.slug}`}>
+              <Link href={`/dashboard/brands/${row.original.slug}`}>
                 View Details
               </Link>
             </Button>
@@ -347,7 +353,10 @@ export const getBrandColumns = (): ColumnDef<BrandTable>[] => [
             </Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem
+            onSelect={(e) => e.preventDefault()}
+            className="p-0"
+          >
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -369,7 +378,23 @@ export const getBrandColumns = (): ColumnDef<BrandTable>[] => [
                   <DialogClose asChild>
                     <Button variant={"secondary"}>Cancel</Button>
                   </DialogClose>
-                  <Button variant={"destructive"} onClick={() => {}}>
+                  <Button
+                    variant={"destructive"}
+                    onClick={async () => {
+                      const result = await deleteBrand(row.original.id);
+
+                      if (result.success) {
+                        toast.success("Success", {
+                          description: "Brand deleted successfully.",
+                        });
+                      } else {
+                        toast.error(`Error ${result.status}`, {
+                          description:
+                            result.error?.message || "Something went wrong.",
+                        });
+                      }
+                    }}
+                  >
                     Confirm
                   </Button>
                 </DialogFooter>

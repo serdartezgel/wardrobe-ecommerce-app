@@ -225,7 +225,7 @@ const CategoryNode = ({ category, level }: CategoryNodeProps) => {
                   className="text-muted-foreground"
                   asChild
                 >
-                  <Link href={`/dashboard/categories/${category.id}/edit`}>
+                  <Link href={`/dashboard/categories/${category.slug}/edit`}>
                     <PencilIcon className="size-5" />
                     <span className="sr-only">Edit</span>
                   </Link>
@@ -254,19 +254,19 @@ const CategoryNode = ({ category, level }: CategoryNodeProps) => {
               </Tooltip>
             )}
             <Dialog>
-              <DialogTrigger asChild>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DialogTrigger asChild>
                     <Button variant={"link"} className="cursor-pointer">
                       <Trash2Icon className="text-destructive size-5" />
                       <span className="sr-only">Delete</span>
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete</p>
-                  </TooltipContent>
-                </Tooltip>
-              </DialogTrigger>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete</p>
+                </TooltipContent>
+              </Tooltip>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Are you absolutely sure?</DialogTitle>

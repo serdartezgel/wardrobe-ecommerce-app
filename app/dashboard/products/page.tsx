@@ -2,8 +2,11 @@ import Link from "next/link";
 
 import ProductsTable from "@/components/tables/ProductsTable";
 import { Button } from "@/components/ui/button";
+import { getAllProducts } from "@/lib/actions/product.action";
 
-const ProductsPage = () => {
+const ProductsPage = async () => {
+  const result = await getAllProducts(true);
+
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -19,7 +22,7 @@ const ProductsPage = () => {
         </Button>
       </header>
 
-      <ProductsTable />
+      <ProductsTable products={result.data || []} />
     </div>
   );
 };

@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import z from "zod";
 
+import { ProductWithRelations } from "@/types/prisma";
+
 import { Product } from "../generated/prisma";
 import action from "../handlers/action";
 import handleError from "../handlers/error";
@@ -652,6 +654,40 @@ export async function bulkUpdateProductStatus(
       success: true,
       data: { count: result.count },
     };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function getAllProducts(
+  includeInactive = false,
+): Promise<ActionResponse<ProductWithRelations[]>> {
+  const validationResult = await action({
+    params: { includeInactive },
+    schema: z.object({ includeInactive: z.boolean() }),
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const prisma = validationResult.prisma;
+
+  try {
+    const products = await prisma.product.findMany({
+      where: includeInactive ? {} : { isActive: true },
+      include: {
+        brand: true,
+        category: true,
+        variants: {
+          take: 1,
+          orderBy: { createdAt: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return { success: true, data: products as ProductWithRelations[] };
   } catch (error) {
     return handleError(error) as ErrorResponse;
   }

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import z from "zod";
 
 import { BrandTable, BrandWithRelations } from "@/types/prisma";
@@ -142,6 +143,51 @@ export async function getBrandBySlug(
     return {
       success: true,
       data: brand,
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function deleteBrand(
+  id: string,
+): Promise<ActionResponse<{ id: string }>> {
+  const validationResult = await action({
+    params: { id },
+    schema: z.object({ id: z.string().min(1) }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const prisma = validationResult.prisma;
+
+  try {
+    const brand = await prisma.brand.findUnique({
+      where: { id },
+      include: {
+        products: true,
+      },
+    });
+
+    if (!brand) throw new NotFoundError("Brand");
+
+    if (brand.products.length > 0)
+      throw new Error(
+        `Cannot delete brand with ${brand.products.length} product(s). Please reassign or delete products first.`,
+      );
+
+    await prisma.brand.delete({
+      where: { id },
+    });
+
+    revalidatePath("/dashboard/brands");
+
+    return {
+      success: true,
+      data: { id },
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;
