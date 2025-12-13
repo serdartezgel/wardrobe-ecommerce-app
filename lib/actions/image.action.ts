@@ -131,3 +131,35 @@ export async function deleteFromCloudinary(
     return handleError(error) as ErrorResponse;
   }
 }
+
+export async function bulkDeleteFromCloudinary(
+  publicIds: string[],
+): Promise<ActionResponse<{ success: boolean; deleted: number }>> {
+  const validationResult = await action({
+    params: { publicIds },
+    schema: z.object({ publicIds: z.array(z.string()) }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  try {
+    const result = await cloudinary.api.delete_resources(publicIds);
+
+    const deletedCount = Object.values(result.deleted).filter(
+      (status) => status === "deleted",
+    ).length;
+
+    return {
+      success: true,
+      data: {
+        success: true,
+        deleted: deletedCount,
+      },
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}

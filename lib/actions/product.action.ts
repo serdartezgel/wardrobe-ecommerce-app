@@ -9,6 +9,8 @@ import { Product } from "../generated/prisma";
 import action from "../handlers/action";
 import handleError from "../handlers/error";
 import { NotFoundError } from "../http-errors";
+import { extractPublicIdFromUrl } from "../utils";
+import { bulkDeleteFromCloudinary } from "./image.action";
 import { generateSlug } from "../utils/slug";
 import { ProductInput, productSchema } from "../validations/product.validation";
 
@@ -321,10 +323,25 @@ export async function updateProduct(
       });
 
       if (updateData.images) {
+        // Extract public IDs from old images
+        const oldImageUrls = existingProduct.images.map((img) => img.url);
+        const publicIdsToDelete = oldImageUrls
+          .map(extractPublicIdFromUrl)
+          .filter((id): id is string => id !== null);
+
+        // Delete from Cloudinary
+        if (publicIdsToDelete.length > 0) {
+          bulkDeleteFromCloudinary(publicIdsToDelete).catch((error) => {
+            console.error("Failed to delete images from Cloudinary:", error);
+          });
+        }
+
+        // Delete from database
         await tx.productImage.deleteMany({
           where: { productId: id },
         });
 
+        // Create new images
         await tx.productImage.createMany({
           data: updateData.images.map((img, index) => ({
             productId: id!,
@@ -444,6 +461,7 @@ export async function deleteProduct(
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
+        images: true,
         _count: {
           select: {
             reviews: true,
@@ -471,9 +489,20 @@ export async function deleteProduct(
       );
     }
 
+    const imageUrls = product.images.map((img) => img.url);
+    const publicIdsToDelete = imageUrls
+      .map(extractPublicIdFromUrl)
+      .filter((id): id is string => id !== null);
+
     await prisma.product.delete({
       where: { id },
     });
+
+    if (publicIdsToDelete.length > 0) {
+      bulkDeleteFromCloudinary(publicIdsToDelete).catch((error) => {
+        console.error("Failed to delete images from Cloudinary:", error);
+      });
+    }
 
     revalidatePath("/dashboard/products");
     revalidatePath("/products");
@@ -606,9 +635,32 @@ export async function bulkDeleteProducts(
       );
     }
 
+    const products = await prisma.product.findMany({
+      where: { id: { in: ids } },
+      include: {
+        images: true,
+      },
+    });
+
+    const allPublicIds: string[] = [];
+    products.forEach((product) => {
+      product.images.forEach((img) => {
+        const publicId = extractPublicIdFromUrl(img.url);
+        if (publicId) {
+          allPublicIds.push(publicId);
+        }
+      });
+    });
+
     const result = await prisma.product.deleteMany({
       where: { id: { in: ids } },
     });
+
+    if (allPublicIds.length > 0) {
+      bulkDeleteFromCloudinary(allPublicIds).catch((error) => {
+        console.error("Failed to delete images from Cloudinary:", error);
+      });
+    }
 
     revalidatePath("/dashboard/products");
     revalidatePath("/products");
