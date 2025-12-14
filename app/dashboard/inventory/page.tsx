@@ -15,12 +15,8 @@ import {
 import { getInventoryLogs } from "@/lib/actions/inventory.action";
 import { InventoryLogWithRelations } from "@/types/prisma";
 
-const InventoryPage = async ({ searchParams }: RouteParams) => {
-  const { page, limit } = await searchParams;
-  const result = await getInventoryLogs({
-    page: Number(page) || 1,
-    limit: Number(limit) || 10,
-  });
+const InventoryPage = async () => {
+  const result = await getInventoryLogs({});
 
   return (
     <div className="flex flex-col gap-4">

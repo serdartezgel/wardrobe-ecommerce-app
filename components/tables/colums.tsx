@@ -445,6 +445,11 @@ export const getInventoryLogColumns =
         row.variant.variantOptions.map((vo) => vo.value).join(" / "),
     },
     {
+      id: "variantId",
+      header: "Variant ID",
+      accessorFn: (row) => row.variant.id,
+    },
+    {
       accessorKey: "type",
       header: "Type",
       cell: ({ getValue }) => {

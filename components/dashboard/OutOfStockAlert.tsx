@@ -51,6 +51,7 @@ export async function OutOfStockAlert() {
             <TableRow>
               <TableHead>Product</TableHead>
               <TableHead>Variant</TableHead>
+              <TableHead>Variant ID</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -83,6 +84,7 @@ export async function OutOfStockAlert() {
                     .map((vo: OutOfStockVariant) => vo.value)
                     .join(" / ")}
                 </TableCell>
+                <TableCell>{variant.id}</TableCell>
                 <TableCell className="font-mono text-sm">
                   {variant.sku}
                 </TableCell>

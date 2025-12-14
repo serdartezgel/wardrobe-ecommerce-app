@@ -51,6 +51,7 @@ export async function LowStockAlert() {
             <TableRow>
               <TableHead>Product</TableHead>
               <TableHead>Variant</TableHead>
+              <TableHead>Variant ID</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead className="text-right">Current Stock</TableHead>
               <TableHead>Status</TableHead>
@@ -84,6 +85,7 @@ export async function LowStockAlert() {
                     .map((vo: LowStockVariant) => vo.value)
                     .join(" / ")}
                 </TableCell>
+                <TableCell>{variant.id}</TableCell>
                 <TableCell className="font-mono text-sm">
                   {variant.sku}
                 </TableCell>

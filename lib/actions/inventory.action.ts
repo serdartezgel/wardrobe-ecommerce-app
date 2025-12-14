@@ -162,9 +162,7 @@ export async function bulkAdjustInventory(
 
 export async function getInventoryLogs(
   params: z.infer<typeof getInventoryLogsSchema>,
-): Promise<
-  ActionResponse<{ logs: InventoryLog[]; total: number; pages: number }>
-> {
+): Promise<ActionResponse<{ logs: InventoryLog[]; total: number }>> {
   const validationResult = await action({
     params,
     schema: getInventoryLogsSchema,
@@ -175,7 +173,7 @@ export async function getInventoryLogs(
     return handleError(validationResult) as ErrorResponse;
   }
 
-  const { variantId, productId, type, startDate, endDate, page, limit } =
+  const { variantId, productId, type, startDate, endDate } =
     validationResult.params!;
   const prisma = validationResult.prisma;
 
@@ -224,8 +222,6 @@ export async function getInventoryLogs(
           },
         },
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
       }),
       prisma.inventoryLog.count({ where }),
     ]);
@@ -235,7 +231,6 @@ export async function getInventoryLogs(
       data: {
         logs,
         total,
-        pages: Math.ceil(total / limit),
       },
     };
   } catch (error) {

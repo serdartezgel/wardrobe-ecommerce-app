@@ -45,6 +45,4 @@ export const getInventoryLogsSchema = z.object({
     .optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().default(50),
 });
