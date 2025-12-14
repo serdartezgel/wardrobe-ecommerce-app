@@ -1,14 +1,6 @@
-import { headers } from "next/headers";
-
 import GlobalSearchInput from "@/components/common/GlobalSearchInput";
-import { auth } from "@/lib/auth";
 
-const ShopPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  console.log(session, session?.user.role);
+const ShopPage = () => {
   return (
     <div className="my-4 flex flex-col items-center gap-6 px-4">
       <div className="w-full md:hidden">

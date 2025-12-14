@@ -2,11 +2,15 @@ import {
   Clock,
   Flame,
   Gift,
+  HeartIcon,
   Leaf,
+  MapPinIcon,
+  PackageIcon,
   Star,
   Stars,
   Tag,
   TrendingUp,
+  UserIcon,
 } from "lucide-react";
 
 type NavItem = {
@@ -235,5 +239,38 @@ export const navLinks: NavItem[] = [
         ],
       },
     ],
+  },
+];
+
+export const accountLinks = [
+  {
+    href: "/account",
+    label: "Account Settings",
+    icon: UserIcon,
+  },
+  {
+    href: "/account/orders",
+    label: "Orders",
+    icon: PackageIcon,
+  },
+  {
+    href: "/account/addresses",
+    label: "Addresses",
+    icon: MapPinIcon,
+  },
+  {
+    href: "/account/coupons",
+    label: "Coupons",
+    icon: Gift,
+  },
+  {
+    href: "/account/wishlist",
+    label: "Wishlist",
+    icon: HeartIcon,
+  },
+  {
+    href: "/account/reviews",
+    label: "Reviews",
+    icon: Star,
   },
 ];

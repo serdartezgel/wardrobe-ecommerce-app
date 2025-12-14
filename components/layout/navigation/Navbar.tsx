@@ -2,14 +2,16 @@ import { ArrowRightIcon, ShoppingCartIcon, User2Icon } from "lucide-react";
 import Link from "next/link";
 
 import { getAllCategories } from "@/lib/actions/category.action";
+import { Session } from "@/lib/auth";
 
 import MobileNav from "./MobileNav";
 import Navigation from "./Navigation";
+import UserDropdownMenu from "./UserDropdownMenu";
 import GlobalSearchModal from "../../common/GlobalSearchModal";
 import ModeToggle from "../../common/ModeToggle";
 import { Button } from "../../ui/button";
 
-const Navbar = async () => {
+const Navbar = async ({ session }: { session: Session | null }) => {
   const result = await getAllCategories(false);
 
   return (
@@ -34,16 +36,20 @@ const Navbar = async () => {
         <div className="flex w-1/3 items-center justify-end md:gap-8">
           <GlobalSearchModal />
           <ModeToggle />
-          <Button
-            variant={"ghost"}
-            size={"icon-lg"}
-            className="no-focus"
-            asChild
-          >
-            <Link href={"/account"}>
-              <User2Icon className="size-5" />
-            </Link>
-          </Button>
+          {session?.user ? (
+            <UserDropdownMenu user={session.user} />
+          ) : (
+            <Button
+              variant={"ghost"}
+              size={"icon-lg"}
+              className="no-focus"
+              asChild
+            >
+              <Link href={"/sign-in"}>
+                <User2Icon className="size-5" />
+              </Link>
+            </Button>
+          )}
           <Button
             variant={"ghost"}
             size={"icon-lg"}

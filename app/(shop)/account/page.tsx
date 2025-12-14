@@ -1,21 +1,27 @@
-"use client";
+import { headers } from "next/headers";
 
-import { useRouter } from "next/navigation";
+import AccountSettingsForm from "@/components/forms/AccountSettingsForm";
+import { auth } from "@/lib/auth";
 
-import { Button } from "@/components/ui/button";
-import { signOut } from "@/lib/auth-client";
+const AccountPage = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-const AccountPage = () => {
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/sign-in");
-  };
+  if (!session?.user) {
+    return null;
+  }
 
   return (
-    <div>
-      <Button onClick={handleSignOut}>Sign Out</Button>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-3xl font-bold">Account Settings</h1>
+        <p className="text-muted-foreground mt-2">
+          Manage your account information and preferences
+        </p>
+      </div>
+
+      <AccountSettingsForm user={session.user} />
     </div>
   );
 };
