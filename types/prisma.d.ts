@@ -1,4 +1,16 @@
-import { Prisma } from "@/lib/generated/prisma";
+import {
+  Address,
+  Order,
+  OrderItem,
+  Prisma,
+  Product,
+  ProductImage,
+  ProductOption,
+  ProductVariant,
+  Review,
+  User,
+  VariantOption,
+} from "@/lib/generated/prisma";
 
 export type ProductWithRelations = Prisma.ProductGetPayload<{
   include: {
@@ -61,3 +73,27 @@ export type InventoryLogWithRelations = Prisma.InventoryLogGetPayload<{
     admin: { select: { name: true; id: true } };
   };
 }>;
+
+export type OrderWithRelations = Order & {
+  user: Pick<User, "id" | "name" | "email" | "image">;
+  shippingAddress: Address;
+  items: (OrderItem & {
+    productVariant: ProductVariant & {
+      product: Product & {
+        images: ProductImage[];
+      };
+      variantOptions: (VariantOption & {
+        option: ProductOption;
+      })[];
+    };
+  })[];
+  reviews: Review[];
+};
+
+export type OrderListItem = Order & {
+  user: Pick<User, "id" | "name" | "email">;
+  items: {
+    id: string;
+    quantity: number;
+  }[];
+};
