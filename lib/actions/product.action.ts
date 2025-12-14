@@ -5,12 +5,12 @@ import z from "zod";
 
 import { ProductWithRelations } from "@/types/prisma";
 
+import { bulkDeleteFromCloudinary } from "./image.action";
 import { Product } from "../generated/prisma";
 import action from "../handlers/action";
 import handleError from "../handlers/error";
 import { NotFoundError } from "../http-errors";
-import { extractPublicIdFromUrl } from "../utils";
-import { bulkDeleteFromCloudinary } from "./image.action";
+import { extractPublicIdFromUrl } from "../utils/image";
 import { generateSlug } from "../utils/slug";
 import { ProductInput, productSchema } from "../validations/product.validation";
 

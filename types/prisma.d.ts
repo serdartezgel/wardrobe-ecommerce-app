@@ -32,3 +32,32 @@ export type BrandTable = Prisma.BrandGetPayload<{
     };
   };
 }>;
+
+export type LowStockVariant = ProductVariant & {
+  product: {
+    name: string;
+    slug: string;
+    images: ProductImage[];
+  };
+  variantOptions: (VariantOption & {
+    option: ProductOption;
+  })[];
+};
+
+export type OutOfStockVariant = ProductVariant & {
+  product: {
+    name: string;
+    slug: string;
+    images: ProductImage[];
+  };
+  variantOptions: (VariantOption & {
+    option: ProductOption;
+  })[];
+};
+
+export type InventoryLogWithRelations = Prisma.InventoryLogGetPayload<{
+  include: {
+    variant: { include: { variantOptions: true; product: true } };
+    admin: { select: { name: true; id: true } };
+  };
+}>;

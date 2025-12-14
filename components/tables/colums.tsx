@@ -7,7 +7,11 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 import { deleteBrand } from "@/lib/actions/brand.action";
-import { BrandTable, ProductWithRelations } from "@/types/prisma";
+import {
+  BrandTable,
+  InventoryLogWithRelations,
+  ProductWithRelations,
+} from "@/types/prisma";
 
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -406,3 +410,75 @@ export const getBrandColumns = (): ColumnDef<BrandTable>[] => [
     ),
   },
 ];
+
+const logTypeColors = {
+  ORDER_PLACED: "destructive",
+  ORDER_CANCELLED: "default",
+  MANUAL_ADJUSTMENT: "secondary",
+  RESTOCK: "default",
+  DAMAGED_LOST: "destructive",
+} as const;
+
+export const getInventoryLogColumns =
+  (): ColumnDef<InventoryLogWithRelations>[] => [
+    {
+      accessorKey: "createdAt",
+      header: "Date",
+      cell: ({ getValue }) =>
+        new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(getValue<Date>())),
+    },
+    {
+      id: "product",
+      header: "Product",
+      accessorFn: (row) => row.variant.product.name,
+    },
+    {
+      id: "variant",
+      header: "Variant",
+      accessorFn: (row) =>
+        row.variant.variantOptions.map((vo) => vo.value).join(" / "),
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ getValue }) => {
+        const type = getValue<keyof typeof logTypeColors>();
+        return (
+          <Badge variant={logTypeColors[type]}>{type.replace(/_/g, " ")}</Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "change",
+      header: "Change",
+      cell: ({ getValue }) => {
+        const value = getValue<number>();
+        return (
+          <span className={value > 0 ? "text-green-600" : "text-red-600"}>
+            {value > 0 ? "+" : ""}
+            {value}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "resultingStock",
+      header: "Resulting Stock",
+    },
+    {
+      id: "admin",
+      header: "Admin",
+      accessorFn: (row) => row.admin?.name || "System",
+    },
+    {
+      accessorKey: "note",
+      header: "Note",
+      cell: ({ getValue }) => getValue<string>() || "-",
+    },
+  ];
