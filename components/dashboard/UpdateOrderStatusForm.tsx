@@ -61,7 +61,7 @@ const UpdateOrderStatusForm = ({ order }: { order: OrderWithRelations }) => {
         <CardTitle>Update Order</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
+        <div className="space-y-2">
           <Label>Order Status</Label>
           <Select
             value={status}
@@ -82,7 +82,7 @@ const UpdateOrderStatusForm = ({ order }: { order: OrderWithRelations }) => {
         </div>
 
         {(status === "SHIPPED" || order.trackingNumber) && (
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="tracking">Tracking Number</Label>
             <Input
               id="tracking"
@@ -93,7 +93,7 @@ const UpdateOrderStatusForm = ({ order }: { order: OrderWithRelations }) => {
           </div>
         )}
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="notes">Notes (Optional)</Label>
           <Textarea
             id="notes"

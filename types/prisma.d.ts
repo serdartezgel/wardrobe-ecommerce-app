@@ -97,3 +97,15 @@ export type OrderListItem = Order & {
     quantity: number;
   }[];
 };
+
+export type WishlistWithProduct = Prisma.WishlistGetPayload<{
+  include: {
+    product: {
+      include: {
+        images: true;
+        brand: true;
+        category: true;
+      };
+    };
+  };
+}>;
