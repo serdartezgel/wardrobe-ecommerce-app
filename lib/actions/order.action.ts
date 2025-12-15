@@ -8,7 +8,7 @@ import type { OrderWithRelations, OrderListItem } from "@/types/prisma";
 import { Order, OrderStatus, Prisma } from "../generated/prisma";
 import action from "../handlers/action";
 import handleError from "../handlers/error";
-import { NotFoundError } from "../http-errors";
+import { NotFoundError, UnauthorizedError } from "../http-errors";
 import {
   updateOrderStatusSchema,
   addTrackingNumberSchema,
@@ -467,6 +467,255 @@ export async function bulkUpdateOrderStatus(
     return {
       success: true,
       data: { count: result.count },
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function getUserOrders(params?: {
+  status?: string;
+  limit?: number;
+}): Promise<ActionResponse<OrderWithRelations[]>> {
+  const validationResult = await action({
+    params: params || {},
+    schema: z.object({
+      status: z.string().optional(),
+      limit: z.number().optional(),
+    }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const { status, limit } = validationResult.params!;
+  const prisma = validationResult.prisma;
+  const userId = validationResult.session?.user.id;
+
+  if (!userId) {
+    return handleError(new Error("Unauthorized")) as ErrorResponse;
+  }
+
+  try {
+    const where: Prisma.OrderWhereInput = {
+      userId,
+    };
+
+    if (status) {
+      where.status = status as OrderStatus;
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        shippingAddress: true,
+        items: {
+          include: {
+            productVariant: {
+              include: {
+                product: {
+                  include: {
+                    images: { take: 1, orderBy: { order: "asc" } },
+                  },
+                },
+                variantOptions: {
+                  include: { option: true },
+                },
+              },
+            },
+          },
+        },
+        reviews: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    return {
+      success: true,
+      data: orders as OrderWithRelations[],
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function getUserOrderById(
+  orderId: string,
+): Promise<ActionResponse<OrderWithRelations>> {
+  const validationResult = await action({
+    params: { orderId },
+    schema: z.object({ orderId: z.string().min(1) }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const prisma = validationResult.prisma;
+  const userId = validationResult.session?.user.id;
+
+  if (!userId) {
+    return handleError(new Error("Unauthorized")) as ErrorResponse;
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: {
+        id: orderId,
+        userId,
+      },
+      include: {
+        shippingAddress: true,
+        items: {
+          include: {
+            productVariant: {
+              include: {
+                product: {
+                  include: {
+                    images: { take: 1, orderBy: { order: "asc" } },
+                  },
+                },
+                variantOptions: {
+                  include: { option: true },
+                },
+              },
+            },
+          },
+        },
+        reviews: {
+          where: {
+            userId,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundError("Order");
+    }
+
+    return {
+      success: true,
+      data: order as OrderWithRelations,
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function cancelUserOrder(
+  orderId: string,
+  reason?: string,
+): Promise<ActionResponse<OrderWithRelations>> {
+  const validationResult = await action({
+    params: { orderId, reason },
+    schema: z.object({
+      orderId: z.string().min(1),
+      reason: z.string().optional(),
+    }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const prisma = validationResult.prisma;
+  const userId = validationResult.session?.user.id;
+
+  if (!userId) {
+    throw new UnauthorizedError();
+  }
+
+  try {
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId, userId },
+      include: {
+        items: {
+          include: {
+            productVariant: true,
+          },
+        },
+      },
+    });
+
+    if (!existingOrder) {
+      throw new NotFoundError("Order");
+    }
+
+    if (!["PENDING", "PROCESSING"].includes(existingOrder.status)) {
+      return {
+        success: false,
+        error: {
+          message: "Order cannot be cancelled at this stage",
+        },
+      };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of existingOrder.items) {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.productVariantId },
+        });
+
+        if (variant) {
+          const newStock = variant.stock + item.quantity;
+
+          await tx.productVariant.update({
+            where: { id: item.productVariantId },
+            data: { stock: newStock },
+          });
+
+          await tx.inventoryLog.create({
+            data: {
+              variantId: item.productVariantId,
+              change: item.quantity,
+              resultingStock: newStock,
+              type: "ORDER_CANCELLED",
+              orderId,
+              note: reason || "Order cancelled by customer",
+            },
+          });
+        }
+      }
+    });
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: "CANCELLED",
+        notes: reason || "Cancelled by customer",
+      },
+      include: {
+        shippingAddress: true,
+        items: {
+          include: {
+            productVariant: {
+              include: {
+                product: {
+                  include: { images: { take: 1 } },
+                },
+                variantOptions: {
+                  include: { option: true },
+                },
+              },
+            },
+          },
+        },
+        reviews: true,
+      },
+    });
+
+    revalidatePath("/account/orders");
+    revalidatePath(`/account/orders/${orderId}`);
+
+    return {
+      success: true,
+      data: updatedOrder as OrderWithRelations,
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;

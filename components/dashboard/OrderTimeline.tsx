@@ -71,7 +71,7 @@ const OrderTimeline = ({ order }: { order: OrderWithRelations }) => {
         <CardTitle>Order Timeline</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
+        <div className="w-48 space-y-6">
           {timeline.map((item, index) => (
             <div key={item.status} className="flex gap-4">
               <div className="flex flex-col items-center">
@@ -79,14 +79,14 @@ const OrderTimeline = ({ order }: { order: OrderWithRelations }) => {
                 {index < timeline.length - 1 && (
                   <div
                     className={`h-12 w-0.5 ${
-                      item.isActive ? "bg-blue-600" : "bg-gray-300"
+                      item.isActive ? "bg-primary" : "bg-muted-foreground"
                     }`}
                   />
                 )}
               </div>
               <div className="flex-1 pb-6">
                 <p
-                  className={`font-medium ${item.isActive ? "" : "text-gray-400"}`}
+                  className={`font-medium ${item.isActive ? "" : "text-muted-foreground"}`}
                 >
                   {item.label}
                 </p>
