@@ -109,3 +109,19 @@ export type WishlistWithProduct = Prisma.WishlistGetPayload<{
     };
   };
 }>;
+
+type ReviewWithRelations = Prisma.ReviewGetPayload<{
+  include: {
+    product: {
+      include: {
+        images: true;
+        brand: true;
+      };
+    };
+    order: {
+      select: {
+        orderNumber: true;
+      };
+    };
+  };
+}>;
