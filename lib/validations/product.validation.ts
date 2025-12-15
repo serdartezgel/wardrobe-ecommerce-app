@@ -23,8 +23,8 @@ export const productVariantSchema = z.object({
   id: z.string().optional(),
   sku: z.string().min(1, "SKU is required"),
   stock: z.number().int().min(0, "Stock cannot be negative"),
-  price: z.number().positive("Price must be positive"),
-  compareAtPrice: z.number().min(0).optional().nullable(),
+  priceCents: z.number().positive("Price must be positive"),
+  compareAtPriceCents: z.number().min(0).optional().nullable(),
   image: z.url().optional().nullable(),
   variantOptions: z
     .array(variantOptionSchema)
@@ -41,7 +41,7 @@ export const productSchema = z
     slug: z.string().optional(), // Auto-generated from name
     categoryId: z.string().min(1, "Category is required"),
     brandId: z.string().min(1, "Brand is required"),
-    basePrice: z
+    basePriceCents: z
       .string()
       .min(1, "Base price is required")
       .refine(

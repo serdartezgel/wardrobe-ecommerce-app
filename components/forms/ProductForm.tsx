@@ -23,6 +23,7 @@ import {
 } from "@/lib/actions/image.action";
 import { createProduct, updateProduct } from "@/lib/actions/product.action";
 import logger from "@/lib/logger";
+import { formatPriceNumber } from "@/lib/utils/price";
 import {
   ProductInput,
   productSchema,
@@ -79,22 +80,27 @@ const ProductForm = ({
 
   const form = useForm<ProductInput>({
     resolver: zodResolver(productSchema),
-    defaultValues: initialData || {
-      name: "",
-      description: "",
-      categoryId: "",
-      brandId: "",
-      basePrice: "",
-      tags: [],
-      isActive: true,
-      isFeatured: false,
-      status: "DRAFT",
-      metaTitle: "",
-      metaDescription: "",
-      images: [],
-      productOptions: [],
-      variants: [],
-    },
+    defaultValues: initialData
+      ? {
+          ...initialData,
+          basePriceCents: formatPriceNumber(Number(initialData.basePriceCents)),
+        }
+      : {
+          name: "",
+          description: "",
+          categoryId: "",
+          brandId: "",
+          basePriceCents: "",
+          tags: [],
+          isActive: true,
+          isFeatured: false,
+          status: "DRAFT",
+          metaTitle: "",
+          metaDescription: "",
+          images: [],
+          productOptions: [],
+          variants: [],
+        },
   });
 
   const {
@@ -299,8 +305,8 @@ const ProductForm = ({
     const newVariants = combinations.map((combo, index) => ({
       sku: `SKU-${Date.now()}-${index}`,
       stock: 0,
-      price: parseFloat(form.getValues("basePrice") || "0"),
-      compareAtPrice: null,
+      priceCents: Number(form.getValues("basePriceCents") || "0"),
+      compareAtPriceCents: null,
       image: null,
       variantOptions: combo,
     }));
@@ -595,14 +601,14 @@ const ProductForm = ({
                   )}
                 />
                 <Controller
-                  name="basePrice"
+                  name="basePriceCents"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field
                       data-invalid={fieldState.invalid}
                       className="max-w-sm"
                     >
-                      <FieldLabel htmlFor="form-product-basePrice">
+                      <FieldLabel htmlFor="form-product-basePriceCents">
                         Base Price *
                       </FieldLabel>
                       <div className="relative">
@@ -611,7 +617,7 @@ const ProductForm = ({
                         </span>
                         <Input
                           {...field}
-                          id="form-product-basePrice"
+                          id="form-product-basePriceCents"
                           type="text"
                           inputMode="decimal"
                           onChange={(e) => {
@@ -619,6 +625,7 @@ const ProductForm = ({
                             field.onChange(value);
                           }}
                           aria-invalid={fieldState.invalid}
+                          placeholder="0.00"
                           autoComplete="off"
                           className="no-focus pl-8"
                         />
@@ -996,6 +1003,7 @@ const ProductForm = ({
                           <Button
                             type="button"
                             variant="ghost"
+                            className="text-destructive"
                             size="icon"
                             onClick={() => removeVariant(index)}
                           >
@@ -1019,7 +1027,7 @@ const ProductForm = ({
                           />
 
                           <Controller
-                            name={`variants.${index}.price`}
+                            name={`variants.${index}.priceCents`}
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <div>
@@ -1064,7 +1072,7 @@ const ProductForm = ({
                           />
 
                           <Controller
-                            name={`variants.${index}.compareAtPrice`}
+                            name={`variants.${index}.compareAtPriceCents`}
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <div>

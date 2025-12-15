@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 import { deleteBrand } from "@/lib/actions/brand.action";
+import { formatPrice } from "@/lib/utils/price";
 import {
   BrandTable,
   InventoryLogWithRelations,
@@ -131,8 +132,9 @@ export const getProductColumns = (): ColumnDef<ProductWithRelations>[] => [
     filterFn: "includesString",
   },
   {
-    accessorKey: "basePrice",
+    accessorKey: "basePriceCents",
     header: "Base Price",
+    cell: ({ row }) => formatPrice(row.original.basePriceCents),
     filterFn: "inNumberRange",
   },
   {

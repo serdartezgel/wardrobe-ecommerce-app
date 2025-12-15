@@ -4,6 +4,8 @@ import { Table } from "@tanstack/react-table";
 import { ChevronDownIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { formatPrice } from "@/lib/utils/price";
+
 import FilterBadge from "./FilterBadge";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -55,7 +57,7 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
 
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(1000);
@@ -79,10 +81,10 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
 
     const prices = table
       .getCoreRowModel()
-      .rows.map((row) => row.getValue<number>("basePrice"));
+      .rows.map((row) => row.getValue<number>("basePriceCents"));
 
     const min = prices.length > 0 ? Math.min(...prices) : 0;
-    const max = prices.length > 0 ? Math.max(...prices) : 1000;
+    const max = prices.length > 0 ? Math.max(...prices) : 100000;
 
     setMinPrice(min);
     setMaxPrice(max);
@@ -246,14 +248,14 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
                   step={1}
                   onValueChange={(value) => {
                     setPriceRange([value[0], value[1]]);
-                    table.getColumn("basePrice")?.setFilterValue(value);
+                    table.getColumn("basePriceCents")?.setFilterValue(value);
                   }}
                   disabled={tableRows.length === 0}
                 />{" "}
                 <div className="text-muted-foreground flex justify-between text-sm">
                   {" "}
-                  <span>Min: {priceRange[0]}</span>{" "}
-                  <span>Max: {priceRange[1]}</span>{" "}
+                  <span>Min: {formatPrice(priceRange[0])}</span>{" "}
+                  <span>Max: {formatPrice(priceRange[1])}</span>{" "}
                 </div>
               </div>
             </div>
@@ -316,10 +318,12 @@ const DashboardProductFilters = <TData,>({ table }: DataTableProps<TData>) => {
 
             {(minPrice !== priceRange[0] || maxPrice !== priceRange[1]) && (
               <FilterBadge
-                label={`Price: $${priceRange[0] || "0"} – $${priceRange[1] || "1000"}`}
+                label={`Price: $${formatPrice(priceRange[0]) || "0"} – $${formatPrice(priceRange[1]) || "1000"}`}
                 onRemove={() => {
-                  setPriceRange([0, 1000]);
-                  table.getColumn("basePrice")?.setFilterValue([0, 1000]);
+                  setPriceRange([0, 100000]);
+                  table
+                    .getColumn("basePriceCents")
+                    ?.setFilterValue([0, 100000]);
                 }}
               />
             )}

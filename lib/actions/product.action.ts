@@ -11,6 +11,7 @@ import action from "../handlers/action";
 import handleError from "../handlers/error";
 import { NotFoundError } from "../http-errors";
 import { extractPublicIdFromUrl } from "../utils/image";
+import { toCents } from "../utils/price";
 import { generateSlug } from "../utils/slug";
 import { ProductInput, productSchema } from "../validations/product.validation";
 
@@ -32,7 +33,7 @@ export async function createProduct(
     description,
     categoryId,
     brandId,
-    basePrice,
+    basePriceCents,
     tags,
     isActive,
     isFeatured,
@@ -95,7 +96,9 @@ export async function createProduct(
     }
 
     const basePriceNumber =
-      typeof basePrice === "string" ? parseFloat(basePrice) : basePrice;
+      typeof basePriceCents === "string"
+        ? toCents(Number(basePriceCents))
+        : toCents(basePriceCents);
 
     const product = await prisma.$transaction(async (tx) => {
       const newProduct = await tx.product.create({
@@ -105,7 +108,7 @@ export async function createProduct(
           description,
           categoryId,
           brandId,
-          basePrice: basePriceNumber,
+          basePriceCents: basePriceNumber,
           tags,
           isActive,
           isFeatured,
@@ -146,8 +149,8 @@ export async function createProduct(
             productId: newProduct.id,
             sku: variant.sku,
             stock: variant.stock,
-            price: variant.price,
-            compareAtPrice: variant.compareAtPrice,
+            priceCents: toCents(variant.priceCents),
+            compareAtPriceCents: toCents(variant.compareAtPriceCents ?? 0),
             image: variant.image,
           },
         });
@@ -297,10 +300,10 @@ export async function updateProduct(
       }
     }
 
-    const basePriceNumber = updateData.basePrice
-      ? typeof updateData.basePrice === "string"
-        ? parseFloat(updateData.basePrice)
-        : updateData.basePrice
+    const basePriceNumber = updateData.basePriceCents
+      ? typeof updateData.basePriceCents === "string"
+        ? toCents(Number(updateData.basePriceCents))
+        : toCents(updateData.basePriceCents)
       : undefined;
 
     const product = await prisma.$transaction(async (tx) => {
@@ -312,7 +315,7 @@ export async function updateProduct(
           description: updateData.description,
           categoryId: updateData.categoryId,
           brandId: updateData.brandId,
-          basePrice: basePriceNumber,
+          basePriceCents: basePriceNumber,
           tags: updateData.tags,
           isActive: updateData.isActive,
           isFeatured: updateData.isFeatured,
@@ -383,8 +386,8 @@ export async function updateProduct(
               productId: id!,
               sku: variant.sku,
               stock: variant.stock,
-              price: variant.price,
-              compareAtPrice: variant.compareAtPrice,
+              priceCents: toCents(variant.priceCents),
+              compareAtPriceCents: toCents(variant.compareAtPriceCents ?? 0),
               image: variant.image,
             },
           });
@@ -563,7 +566,7 @@ export async function getProductForEdit(
       slug: product.slug,
       categoryId: product.categoryId,
       brandId: product.brandId,
-      basePrice: product.basePrice.toString(),
+      basePriceCents: product.basePriceCents.toString(),
       tags: product.tags,
       isActive: product.isActive,
       isFeatured: product.isFeatured,
@@ -582,8 +585,8 @@ export async function getProductForEdit(
       variants: product.variants.map((variant) => ({
         sku: variant.sku,
         stock: variant.stock,
-        price: variant.price.toNumber(),
-        compareAtPrice: variant.compareAtPrice?.toNumber() || null,
+        priceCents: variant.priceCents,
+        compareAtPriceCents: variant.compareAtPriceCents,
         image: variant.image,
         variantOptions: variant.variantOptions.map((vo) => ({
           optionId: vo.option.id,

@@ -25,6 +25,19 @@ const CategoriesPage = async () => {
       </header>
 
       <div className="bg-muted border-border rounded-lg border p-4">
+        {!result.data ||
+          (result.data.length === 0 && (
+            <div className="flex flex-col items-center justify-center gap-4">
+              <p className="text-muted-foreground">
+                There are no categories in your shop. Create one to start.
+              </p>
+              <Button asChild>
+                <Link href={"/dashboard/categories/create"}>
+                  Create a New Category
+                </Link>
+              </Button>
+            </div>
+          ))}
         <CategoryTree categories={result.data || []} />
       </div>
     </div>

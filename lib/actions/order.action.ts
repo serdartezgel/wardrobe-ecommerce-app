@@ -394,8 +394,8 @@ export async function getOrderStatistics(): Promise<
           status: { in: ["PROCESSING", "SHIPPED", "DELIVERED"] },
           createdAt: { gte: thirtyDaysAgo },
         },
-        _sum: { total: true },
-        _avg: { total: true },
+        _sum: { totalCents: true },
+        _avg: { totalCents: true },
       }),
       prisma.order.findMany({
         take: 10,
@@ -420,8 +420,8 @@ export async function getOrderStatistics(): Promise<
         shippedOrders,
         deliveredOrders,
         cancelledOrders,
-        revenue30Days: revenueStats._sum.total?.toNumber() || 0,
-        averageOrderValue: revenueStats._avg.total?.toNumber() || 0,
+        revenue30Days: revenueStats._sum.totalCents || 0,
+        averageOrderValue: revenueStats._avg.totalCents || 0,
         recentOrders,
       },
     };

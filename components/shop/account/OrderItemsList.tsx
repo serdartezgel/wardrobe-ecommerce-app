@@ -2,6 +2,7 @@ import { PackageIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { formatPrice } from "@/lib/utils/price";
 import { OrderWithRelations } from "@/types/prisma";
 
 const OrderItemsList = ({ items }: { items: OrderWithRelations["items"] }) => {
@@ -20,7 +21,6 @@ const OrderItemsList = ({ items }: { items: OrderWithRelations["items"] }) => {
               href={`/products/${product.slug}`}
               className="group hover:bg-muted/50 flex items-center gap-4 rounded-lg border p-4 transition-colors"
             >
-              {/* Product Image */}
               <div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-md sm:size-24">
                 {imageUrl ? (
                   <Image
@@ -36,7 +36,6 @@ const OrderItemsList = ({ items }: { items: OrderWithRelations["items"] }) => {
                 )}
               </div>
 
-              {/* Product Info */}
               <div className="flex flex-1 flex-col justify-between">
                 <div>
                   <h3 className="font-medium group-hover:underline">
@@ -59,9 +58,11 @@ const OrderItemsList = ({ items }: { items: OrderWithRelations["items"] }) => {
                     Qty: {item.quantity}
                   </span>
                   <div className="text-right">
-                    <p className="font-semibold">{item.subtotal.toNumber()}</p>
+                    <p className="font-semibold">
+                      {formatPrice(item.subtotalCents)}
+                    </p>
                     <p className="text-muted-foreground text-sm">
-                      {item.price.toNumber()} each
+                      {formatPrice(item.priceCents)} each
                     </p>
                   </div>
                 </div>

@@ -208,11 +208,11 @@ model Product {
   brandId String
   brand   Brand  @relation(fields: [brandId], references: [id])
 
-  basePrice  Decimal       @db.Decimal(10, 2)
-  isActive   Boolean       @default(true)
-  isFeatured Boolean       @default(false)
-  status     ProductStatus @default(DRAFT)
-  tags       String[]
+  basePriceCents Int
+  isActive       Boolean       @default(true)
+  isFeatured     Boolean       @default(false)
+  status         ProductStatus @default(DRAFT)
+  tags           String[]
 
   metaTitle       String?
   metaDescription String?
@@ -240,10 +240,10 @@ model ProductVariant {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  sku            String   @unique
-  stock          Int      @default(0)
-  price          Decimal  @db.Decimal(10, 2)
-  compareAtPrice Decimal? @db.Decimal(10, 2)
+  sku                 String @unique
+  stock               Int    @default(0)
+  priceCents          Int
+  compareAtPriceCents Int?
 
   image          String?
   variantOptions VariantOption[]
@@ -391,12 +391,12 @@ model Order {
   userId      String
   user        User   @relation(fields: [userId], references: [id])
 
-  status   OrderStatus @default(PENDING)
-  subtotal Decimal     @db.Decimal(10, 2)
-  tax      Decimal     @db.Decimal(10, 2)
-  shipping Decimal     @db.Decimal(10, 2)
-  discount Decimal     @default(0) @db.Decimal(10, 2)
-  total    Decimal     @db.Decimal(10, 2)
+  status        OrderStatus @default(PENDING)
+  subtotalCents Int
+  taxCents      Int
+  shippingCents Int
+  discountCents Int
+  totalCents    Int
 
   shippingAddressId String
   shippingAddress   Address @relation(fields: [shippingAddressId], references: [id])
@@ -426,9 +426,9 @@ model OrderItem {
   productVariantId String
   productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
 
-  quantity Int
-  price    Decimal @db.Decimal(10, 2)
-  subtotal Decimal @db.Decimal(10, 2)
+  quantity      Int
+  priceCents    Int
+  subtotalCents Int
 
   createdAt DateTime @default(now())
 
@@ -492,17 +492,17 @@ model Wishlist {
 }
 
 model Coupon {
-  id          String       @id @default(cuid())
-  code        String       @unique
-  type        DiscountType
-  value       Decimal      @db.Decimal(10, 2)
-  minPurchase Decimal?     @db.Decimal(10, 2)
-  maxDiscount Decimal?     @db.Decimal(10, 2)
-  usageLimit  Int?
-  usageCount  Int          @default(0)
-  validFrom   DateTime
-  validUntil  DateTime
-  isActive    Boolean      @default(true)
+  id               String       @id @default(cuid())
+  code             String       @unique
+  type             DiscountType
+  valueCents       Int
+  minPurchaseCents Int?
+  maxDiscountCents Int?
+  usageLimit       Int?
+  usageCount       Int          @default(0)
+  validFrom        DateTime
+  validUntil       DateTime
+  isActive         Boolean      @default(true)
 
   collections CollectionCoupon[]
 
@@ -519,12 +519,12 @@ model Promotion {
   code String?       @unique
   type PromotionType
 
-  discountType  DiscountType?
-  discountValue Decimal?      @db.Decimal(10, 2)
+  discountType       DiscountType?
+  discountValueCents Int?
 
-  minPurchase Decimal? @db.Decimal(10, 2)
-  minQuantity Int?
-  maxDiscount Decimal? @db.Decimal(10, 2)
+  minPurchaseCents Int?
+  minQuantity      Int?
+  maxDiscountCents Int?
 
   // Buy one Get One configuration (stored as JSON)
   // Example: {"buy": 2, "get": 1, "discountPercent": 100}

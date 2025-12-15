@@ -2,6 +2,7 @@ import { Package, Clock, Truck, DollarSign } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOrderStatistics } from "@/lib/actions/order.action";
+import { formatPrice } from "@/lib/utils/price";
 
 const OrderStats = async () => {
   const result = await getOrderStatistics();
@@ -54,10 +55,10 @@ const OrderStats = async () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            ${stats.revenue30Days.toLocaleString()}
+            {formatPrice(stats.revenue30Days)}
           </div>
           <p className="text-muted-foreground text-xs">
-            Avg: ${stats.averageOrderValue.toFixed(2)}
+            Avg: {formatPrice(stats.averageOrderValue)}
           </p>
         </CardContent>
       </Card>

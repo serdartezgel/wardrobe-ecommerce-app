@@ -80,10 +80,9 @@ const UserDropdownMenu = ({ user }: { user: User }) => {
                 </DropdownMenuItem>
               );
             })}
-
-            <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Button
             variant={"destructive"}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatPrice } from "@/lib/utils/price";
 import type { OrderWithRelations } from "@/types/prisma";
 
 import OrderTimeline from "./OrderTimeline";
@@ -100,12 +101,14 @@ const OrderDetailView = ({ order }: { order: OrderWithRelations }) => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${item.price.toString()}</p>
+                      <p className="font-medium">
+                        ${formatPrice(item.priceCents)}
+                      </p>
                       <p className="text-muted-foreground text-sm">
                         Qty: {item.quantity}
                       </p>
                       <p className="mt-1 font-semibold">
-                        ${item.subtotal.toString()}
+                        ${formatPrice(item.subtotalCents)}
                       </p>
                     </div>
                   </div>
@@ -117,26 +120,26 @@ const OrderDetailView = ({ order }: { order: OrderWithRelations }) => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>${order.subtotal.toString()}</span>
+                  <span>${formatPrice(order.subtotalCents)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Shipping</span>
-                  <span>${order.shipping.toString()}</span>
+                  <span>${formatPrice(order.shippingCents)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tax</span>
-                  <span>${order.tax.toString()}</span>
+                  <span>${formatPrice(order.taxCents)}</span>
                 </div>
-                {order.discount.toNumber() > 0 && (
+                {order.discountCents > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount</span>
-                    <span>-${order.discount.toString()}</span>
+                    <span>-${formatPrice(order.discountCents)}</span>
                   </div>
                 )}
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span>${order.total.toString()}</span>
+                  <span>${formatPrice(order.totalCents)}</span>
                 </div>
               </div>
             </CardContent>

@@ -382,11 +382,11 @@ export async function getInventoryStats(): Promise<
 
     const variants = await prisma.productVariant.findMany({
       where: { product: { isActive: true } },
-      select: { stock: true, price: true },
+      select: { stock: true, priceCents: true },
     });
 
     const inventoryValue = variants.reduce(
-      (sum, v) => sum + v.stock * v.price.toNumber(),
+      (sum, v) => sum + v.stock * v.priceCents,
       0,
     );
 

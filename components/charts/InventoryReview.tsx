@@ -2,6 +2,7 @@ import { Package, AlertTriangle, XCircle, TrendingUp } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getInventoryStats } from "@/lib/actions/inventory.action";
+import { formatPrice } from "@/lib/utils/price";
 
 export async function InventoryOverview() {
   const result = await getInventoryStats();
@@ -72,10 +73,7 @@ export async function InventoryOverview() {
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            $
-            {stats.inventoryValue.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-            })}
+            {formatPrice(stats.inventoryValue)}
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
             Total value of current inventory

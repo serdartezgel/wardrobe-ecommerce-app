@@ -8,6 +8,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { removeFromWishlist } from "@/lib/actions/wishlist.action";
+import { formatPrice } from "@/lib/utils/price";
 import { WishlistWithProduct } from "@/types/prisma";
 
 import { Badge } from "../ui/badge";
@@ -82,7 +83,7 @@ const WishlistCard = ({
 
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-lg font-bold">
-              {Number(product.basePrice)}
+              {formatPrice(product.basePriceCents)}
             </span>
           </div>
 
