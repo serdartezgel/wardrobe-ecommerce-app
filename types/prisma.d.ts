@@ -125,3 +125,11 @@ type ReviewWithRelations = Prisma.ReviewGetPayload<{
     };
   };
 }>;
+
+type CollectionWithCount = Prisma.CollectionGetPayload<{
+  include: {
+    _count: {
+      select: { products: true };
+    };
+  };
+}>;

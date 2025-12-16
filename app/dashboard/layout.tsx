@@ -32,7 +32,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
         />
         <SidebarTrigger className="mt-8 size-8 rounded-l-none border border-l-0 md:-mx-2" />
 
-        <div className="flex flex-1 flex-col overflow-y-auto md:px-6">
+        <div className="flex flex-1 flex-col overflow-y-auto max-md:pr-6 md:px-6">
           <DashboardHeader user={user} />
 
           <main className="flex-1 py-6">{children}</main>
