@@ -37,7 +37,7 @@ export function getSidebarLinks(role: UserRole) {
 
   if (role === "SUPER_ADMIN") {
     links.push(
-      { href: "/dashboard/users", label: "Users", icon: UserCog },
+      { href: "/dashboard/management", label: "Management", icon: UserCog },
       { href: "/dashboard/settings", label: "Settings", icon: Settings },
     );
   }

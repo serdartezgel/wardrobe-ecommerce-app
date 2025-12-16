@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { ChevronLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -47,9 +48,15 @@ const DashboardCollectionPage = async ({ params }: RouteParams) => {
             rules: collection.rules || "",
             metaTitle: collection.metaTitle || "",
             metaDescription: collection.metaDescription || "",
-            publishedAt: collection.publishedAt?.toISOString() || "",
-            validFrom: collection.validFrom?.toISOString() || "",
-            validUntil: collection.validUntil?.toISOString() || "",
+            publishedAt: collection.publishedAt
+              ? format(new Date(collection.publishedAt), "yyyy-MM-dd'T'HH:mm")
+              : "",
+            validFrom: collection.validFrom
+              ? format(new Date(collection.validFrom), "yyyy-MM-dd")
+              : "",
+            validUntil: collection.validUntil
+              ? format(new Date(collection.validUntil), "yyyy-MM-dd")
+              : "",
           }}
           isEditing
         />

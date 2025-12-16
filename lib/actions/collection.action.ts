@@ -10,6 +10,10 @@ import action from "../handlers/action";
 import handleError from "../handlers/error";
 import { NotFoundError } from "../http-errors";
 import {
+  buildProductWhereFromRules,
+  generateRulesByType,
+} from "../utils/collection-rules";
+import {
   CollectionInput,
   collectionSchema,
 } from "../validations/collection.validation";
@@ -51,6 +55,39 @@ export async function getAllCollections(
     return {
       success: true,
       data: collections as CollectionWithCount[],
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function getCollectionById(
+  collectionId: string,
+): Promise<ActionResponse<Collection>> {
+  const validationResult = await action({
+    params: { collectionId },
+    schema: z.object({ collectionId: z.string().min(1) }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const prisma = validationResult.prisma;
+
+  try {
+    const collection = await prisma.collection.findUnique({
+      where: { id: collectionId },
+    });
+
+    if (!collection) {
+      throw new NotFoundError("Collection");
+    }
+
+    return {
+      success: true,
+      data: collection,
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;
@@ -134,6 +171,8 @@ export async function createCollection(
       };
     }
 
+    const autoRules = generateRulesByType(type);
+
     const collection = await prisma.collection.create({
       data: {
         name,
@@ -144,7 +183,12 @@ export async function createCollection(
         isActive,
         isFeatured,
         order,
-        rules: rules || null,
+        rules:
+          type === "MANUAL"
+            ? null
+            : type === "AUTOMATIC"
+              ? rules || null
+              : autoRules,
         metaTitle: metaTitle || null,
         metaDescription: metaDescription || null,
         publishedAt: publishedAt ? new Date(publishedAt) : null,
@@ -206,6 +250,17 @@ export async function updateCollection(
       }
     }
 
+    const typeChanged = data.type !== existingCollection.type;
+
+    const rules =
+      data.type === "MANUAL"
+        ? null
+        : data.type === "AUTOMATIC"
+          ? data.rules
+          : typeChanged
+            ? generateRulesByType(data.type)
+            : existingCollection.rules;
+
     const collection = await prisma.collection.update({
       where: { id },
       data: {
@@ -217,7 +272,7 @@ export async function updateCollection(
         isActive: data.isActive,
         isFeatured: data.isFeatured,
         order: data.order,
-        rules: data.rules || null,
+        rules,
         metaTitle: data.metaTitle || null,
         metaDescription: data.metaDescription || null,
         publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,
@@ -311,6 +366,85 @@ export async function toggleCollectionStatus(
     return {
       success: true,
       data: updated,
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function syncCollection(input: {
+  id: string;
+}): Promise<ActionResponse<{ added: number }>> {
+  const validationResult = await action({
+    params: input,
+    schema: z.object({
+      id: z.string(),
+    }),
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const { id } = validationResult.params!;
+  const prisma = validationResult.prisma;
+
+  try {
+    const collection = await prisma.collection.findUnique({
+      where: { id },
+    });
+
+    if (!collection) {
+      throw new NotFoundError("Collection");
+    }
+
+    if (collection.type === "MANUAL") {
+      return {
+        success: false,
+        error: { message: "Manual collections cannot be synced" },
+      };
+    }
+
+    if (!collection.rules) {
+      return {
+        success: false,
+        error: { message: "Collection has no rules to sync" },
+      };
+    }
+
+    const productWhere = buildProductWhereFromRules(collection.rules);
+
+    const products = await prisma.product.findMany({
+      where: {
+        ...productWhere,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    await prisma.collectionProduct.deleteMany({
+      where: { collectionId: id },
+    });
+
+    if (products.length > 0) {
+      await prisma.collectionProduct.createMany({
+        data: products.map((product, index) => ({
+          collectionId: id,
+          productId: product.id,
+          order: index,
+        })),
+      });
+    }
+
+    revalidatePath("/dashboard/collections");
+    revalidatePath(`/dashboard/collections/${id}`);
+
+    return {
+      success: true,
+      data: {
+        added: products.length,
+      },
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;

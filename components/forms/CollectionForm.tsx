@@ -4,13 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { UploadIcon, Trash2Icon, Loader2Icon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import {
   updateCollection,
   createCollection,
+  syncCollection,
 } from "@/lib/actions/collection.action";
 import {
   deleteFromCloudinary,
@@ -73,6 +74,20 @@ const CollectionForm = ({ initialData, isEditing }: CollectionFormProps) => {
     },
   });
 
+  const syncAndNotify = async (collectionId: string) => {
+    const sync = await syncCollection({ id: collectionId });
+
+    if (sync.success && sync.data) {
+      toast.success("Collection synced", {
+        description: `${sync.data.added} products added`,
+      });
+    } else {
+      toast.error("Sync failed", {
+        description: sync.error?.message,
+      });
+    }
+  };
+
   const handleSubmit = async (data: CollectionInput) => {
     startTransition(async () => {
       if (isEditing && initialData?.id) {
@@ -81,11 +96,14 @@ const CollectionForm = ({ initialData, isEditing }: CollectionFormProps) => {
           ...data,
         });
 
-        if (result.success) {
+        if (result.success && result.data) {
           toast.success("Success", {
             description: "Collection updated successfully.",
           });
+
           router.push("/dashboard/collections");
+
+          syncAndNotify(result.data.id);
         } else {
           toast.error(`Error ${result.status}`, {
             description: result.error?.message || "Something went wrong.",
@@ -94,11 +112,14 @@ const CollectionForm = ({ initialData, isEditing }: CollectionFormProps) => {
       } else {
         const result = await createCollection(data);
 
-        if (result.success) {
+        if (result.success && result.data) {
           toast.success("Success", {
             description: "Collection created successfully.",
           });
+
           router.push("/dashboard/collections");
+
+          syncAndNotify(result.data.id);
         } else {
           toast.error(`Error ${result.status}`, {
             description: result.error?.message || "Something went wrong.",
@@ -159,6 +180,14 @@ const CollectionForm = ({ initialData, isEditing }: CollectionFormProps) => {
 
     toast.success("Collection image deleted");
   };
+
+  const type = form.watch("type");
+
+  useEffect(() => {
+    if (type === "MANUAL") {
+      form.setValue("rules", "", { shouldValidate: true });
+    }
+  }, [type, form]);
 
   const { isSubmitting } = form.formState;
 
@@ -239,7 +268,7 @@ const CollectionForm = ({ initialData, isEditing }: CollectionFormProps) => {
               <FieldLabel htmlFor="form-collection-type">
                 Collection Type *
               </FieldLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger id="form-collection-type" className="no-focus">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
@@ -460,6 +489,98 @@ const CollectionForm = ({ initialData, isEditing }: CollectionFormProps) => {
             </Field>
           )}
         />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Controller
+            name="publishedAt"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-collection-publishedAt">
+                  Published At
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="form-collection-publishedAt"
+                  type="datetime-local"
+                  aria-invalid={fieldState.invalid}
+                  className="no-focus"
+                />
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="validFrom"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-collection-validFrom">
+                  Valid From
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="form-collection-validFrom"
+                  type="date"
+                  aria-invalid={fieldState.invalid}
+                  className="no-focus"
+                />
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="validUntil"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-collection-validUntil">
+                  Valid Until
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="form-collection-validUntil"
+                  type="date"
+                  aria-invalid={fieldState.invalid}
+                  className="no-focus"
+                />
+              </Field>
+            )}
+          />
+        </div>
+
+        {type === "AUTOMATIC" ? (
+          <Controller
+            name="rules"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-collection-rules">
+                  Rules (JSON)
+                </FieldLabel>
+                <Textarea
+                  {...field}
+                  id="form-collection-rules"
+                  rows={6}
+                  placeholder='{"conditions":[{"field":"tags","operator":"contains","value":"summer"}]}'
+                  className="no-focus text-sm"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        ) : type === "MANUAL" ? (
+          <FieldDescription>
+            Visit collection page after submitting the changes to add products
+            for this collection type.
+          </FieldDescription>
+        ) : (
+          <FieldDescription>
+            Rules are automatically generated for this collection type.
+          </FieldDescription>
+        )}
       </FieldGroup>
 
       <Button

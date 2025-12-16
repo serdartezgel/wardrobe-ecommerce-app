@@ -1,11 +1,14 @@
 "use client";
 
+import { format } from "date-fns";
 import {
   PackageIcon,
   PencilIcon,
   MoreVerticalIcon,
   PowerIcon,
   Trash2Icon,
+  CopyIcon,
+  RefreshCwIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,6 +19,7 @@ import { toast } from "sonner";
 import {
   toggleCollectionStatus,
   deleteCollection,
+  syncCollection,
 } from "@/lib/actions/collection.action";
 import { CollectionWithCount } from "@/types/prisma";
 
@@ -97,6 +101,35 @@ const CollectionCard = ({
     });
   };
 
+  const handleDuplicate = () => {
+    router.push(`/dashboard/collections/create?duplicateId=${collection.id}`);
+  };
+
+  const handleSync = async () => {
+    const result = await syncCollection({ id: collection.id });
+
+    if (result.success && result.data) {
+      toast.success("Collection synced", {
+        description: `${result.data.added} products added`,
+      });
+    } else {
+      toast.error("Sync failed", {
+        description: result.error?.message,
+      });
+    }
+  };
+
+  const now = new Date();
+
+  const status = (() => {
+    if (!collection.isActive) return "Inactive";
+    if (collection.validFrom && now < new Date(collection.validFrom))
+      return "Scheduled";
+    if (collection.validUntil && now > new Date(collection.validUntil))
+      return "Expired";
+    return "Active";
+  })();
+
   return (
     <>
       <div className="bg-card group relative flex flex-col overflow-hidden rounded-lg border transition-shadow hover:shadow-md">
@@ -116,13 +149,20 @@ const CollectionCard = ({
             )}
           </div>
 
-          {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-wrap gap-2">
             {collection.isFeatured && <Badge>Featured</Badge>}
-            {!collection.isActive && (
-              <Badge variant="secondary">Inactive</Badge>
-            )}
-            <Badge variant="default">{typeLabels[collection.type]}</Badge>
+            <Badge variant="secondary">{typeLabels[collection.type]}</Badge>
+            <Badge
+              variant={
+                status === "Active"
+                  ? "default"
+                  : status === "Scheduled"
+                    ? "secondary"
+                    : "destructive"
+              }
+            >
+              {status}
+            </Badge>
           </div>
         </Link>
 
@@ -139,6 +179,24 @@ const CollectionCard = ({
                 {collection.description}
               </p>
             )}
+
+            <p className="text-muted-foreground mt-1 text-xs">
+              /{collection.slug}
+            </p>
+
+            <div className="text-muted-foreground mt-2 space-y-1 text-xs">
+              {collection.validFrom && (
+                <div>
+                  From: {format(new Date(collection.validFrom), "MMM dd, yyyy")}
+                </div>
+              )}
+              {collection.validUntil && (
+                <div>
+                  Until:{" "}
+                  {format(new Date(collection.validUntil), "MMM dd, yyyy")}
+                </div>
+              )}
+            </div>
 
             <div className="text-muted-foreground mt-3 flex items-center gap-2 text-sm">
               <PackageIcon className="size-4" />
@@ -165,6 +223,17 @@ const CollectionCard = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleDuplicate}>
+                    <CopyIcon className="mr-2 size-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  {collection.type !== "MANUAL" && (
+                    <DropdownMenuItem onClick={handleSync}>
+                      <RefreshCwIcon className="mr-2 size-4" />
+                      Sync Products
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleToggleStatus}
                     disabled={isPending}
