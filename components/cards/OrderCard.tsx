@@ -3,6 +3,7 @@ import { ChevronRightIcon, PackageIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { formatPrice } from "@/lib/utils/price";
 import { OrderWithRelations } from "@/types/prisma";
 
 import { Badge } from "../ui/badge";
@@ -76,7 +77,9 @@ const OrderCard = ({ order }: { order: OrderWithRelations }) => {
                   items
                 </span>
                 <span className="text-muted-foreground">•</span>
-                <span className="font-semibold">{order.total.toNumber()}</span>
+                <span className="font-semibold">
+                  {formatPrice(order.totalCents)}
+                </span>
               </div>
             </div>
           </div>

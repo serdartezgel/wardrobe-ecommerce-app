@@ -13,7 +13,7 @@ import OrderTimeline from "./OrderTimeline";
 import UpdateOrderStatusForm from "./UpdateOrderStatusForm";
 import { Badge } from "../ui/badge";
 
-const OrderStatusBadge = ({ status }: { status: string }) => {
+export const OrderStatusBadge = ({ status }: { status: string }) => {
   const variants: Record<
     string,
     {

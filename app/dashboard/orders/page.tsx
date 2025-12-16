@@ -1,8 +1,12 @@
 import { Suspense } from "react";
 
 import OrderStats from "@/components/cards/OrderStats";
+import OrdersTable from "@/components/tables/OrdersTable";
+import { getAllOrders } from "@/lib/actions/order.action";
 
-const OrdersPage = () => {
+const OrdersPage = async () => {
+  const result = await getAllOrders();
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -19,7 +23,7 @@ const OrdersPage = () => {
       </Suspense>
 
       <Suspense fallback={<div>Loading orders...</div>}>
-        {/* <OrdersTable /> */}
+        <OrdersTable orders={result.data ? result.data.orders : []} />
       </Suspense>
     </div>
   );

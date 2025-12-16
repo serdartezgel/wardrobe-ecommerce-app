@@ -1,7 +1,8 @@
 "use client";
 
 import { ColumnDef, CoreRow } from "@tanstack/react-table";
-import { ArrowUpDownIcon, MoreHorizontal } from "lucide-react";
+import { format } from "date-fns";
+import { ArrowUpDownIcon, EyeIcon, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -11,9 +12,11 @@ import { formatPrice } from "@/lib/utils/price";
 import {
   BrandTable,
   InventoryLogWithRelations,
+  OrderListItem,
   ProductWithRelations,
 } from "@/types/prisma";
 
+import { OrderStatusBadge } from "../dashboard/OrderDetailView";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -489,3 +492,48 @@ export const getInventoryLogColumns =
       cell: ({ getValue }) => getValue<string>() || "-",
     },
   ];
+
+export const getOrderColumns = (): ColumnDef<OrderListItem>[] => [
+  {
+    accessorKey: "orderNumber",
+    header: "Order Number",
+  },
+  {
+    accessorKey: "customer",
+    accessorFn: (row) => row.user.name,
+    header: "Customer",
+  },
+  {
+    accessorKey: "createdAt",
+    accessorFn: (row) => format(new Date(row.createdAt), "MMM dd, yyyy. HH:mm"),
+    header: "Date",
+  },
+  {
+    accessorKey: "items",
+    header: "Items",
+    cell: ({ row }) =>
+      `${row.original.items.reduce((sum, item) => sum + item.quantity, 0)} items`,
+  },
+  {
+    accessorKey: "totalCents",
+    accessorFn: (row) => formatPrice(row.totalCents),
+    header: "Total",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }: { row: CoreRow<OrderListItem> }) => (
+      <Button variant="link" className="px-0!" asChild>
+        <Link href={`/dashboard/orders/${row.original.id}`}>
+          <EyeIcon className="size-4" />
+          View
+        </Link>
+      </Button>
+    ),
+  },
+];
