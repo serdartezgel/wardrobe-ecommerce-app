@@ -4,11 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, Trash2Icon, UploadIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createBrand, updateBrand } from "@/lib/actions/brand.action";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "@/lib/actions/image.action";
+import logger from "@/lib/logger";
+import { extractPublicIdFromUrl } from "@/lib/utils/image";
 import { BrandInput, brandSchema } from "@/lib/validations/brand.validation";
 
 import { Button } from "../ui/button";
@@ -31,6 +37,7 @@ interface BrandFormProps {
 const BrandForm = ({ initialData, isEditing }: BrandFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<BrandInput>({
     resolver: zodResolver(brandSchema),
@@ -78,17 +85,56 @@ const BrandForm = ({ initialData, isEditing }: BrandFormProps) => {
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    setIsUploading(true);
 
-    reader.onloadend = () => {
-      form.setValue("logo", reader.result as string, { shouldValidate: true });
-    };
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-    reader.readAsDataURL(file);
+      const result = await uploadToCloudinary({
+        file: base64,
+        folder: "brands",
+      });
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message);
+      }
+
+      form.setValue("logo", result.data.url, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+      toast.success("Logo uploaded successfully");
+    } catch (error) {
+      logger.error(`Upload error: ${error}`);
+      toast.error("Failed to upload logo");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const imageUrl = form.getValues("logo");
+    let publicId;
+    if (imageUrl) publicId = extractPublicIdFromUrl(imageUrl);
+
+    if (publicId) {
+      await deleteFromCloudinary(publicId);
+    }
+
+    form.setValue("logo", undefined, { shouldDirty: true });
+
+    toast.success("Brand logo deleted");
   };
 
   const { isSubmitting } = form.formState;
@@ -156,6 +202,7 @@ const BrandForm = ({ initialData, isEditing }: BrandFormProps) => {
             <Button
               type="button"
               variant="outline"
+              disabled={isSubmitting || isPending || isUploading}
               onClick={() => document.getElementById("logo-upload")?.click()}
             >
               <UploadIcon className="mr-2 h-4 w-4" />
@@ -191,9 +238,8 @@ const BrandForm = ({ initialData, isEditing }: BrandFormProps) => {
                   size="icon"
                   variant="destructive"
                   className="h-8 w-8"
-                  onClick={() =>
-                    form.setValue("logo", null, { shouldValidate: true })
-                  }
+                  onClick={handleRemoveImage}
+                  disabled={isSubmitting || isPending || isUploading}
                 >
                   <Trash2Icon className="h-4 w-4" />
                 </Button>
@@ -232,7 +278,7 @@ const BrandForm = ({ initialData, isEditing }: BrandFormProps) => {
       <Button
         type="submit"
         form="form-brand"
-        disabled={isSubmitting || isPending}
+        disabled={isSubmitting || isPending || isUploading}
         className="flex-1"
       >
         {isSubmitting || isPending ? (

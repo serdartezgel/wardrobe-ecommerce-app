@@ -4,11 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, Trash2Icon, UploadIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createCategory, updateCategory } from "@/lib/actions/category.action";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "@/lib/actions/image.action";
+import logger from "@/lib/logger";
+import { extractPublicIdFromUrl } from "@/lib/utils/image";
 import {
   CategoryInput,
   categorySchema,
@@ -39,6 +45,7 @@ const CategoryForm = ({
 }: CategoryFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<CategoryInput>({
     resolver: zodResolver(categorySchema),
@@ -96,17 +103,56 @@ const CategoryForm = ({
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    setIsUploading(true);
 
-    reader.onloadend = () => {
-      form.setValue("image", reader.result as string, { shouldValidate: true });
-    };
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-    reader.readAsDataURL(file);
+      const result = await uploadToCloudinary({
+        file: base64,
+        folder: "categories",
+      });
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message);
+      }
+
+      form.setValue("image", result.data.url, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      logger.error(`Upload error: ${error}`);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const imageUrl = form.getValues("image");
+    let publicId;
+    if (imageUrl) publicId = extractPublicIdFromUrl(imageUrl);
+
+    if (publicId) {
+      await deleteFromCloudinary(publicId);
+    }
+
+    form.setValue("image", undefined, { shouldDirty: true });
+
+    toast.success("Category image deleted");
   };
 
   const { isSubmitting } = form.formState;
@@ -176,6 +222,7 @@ const CategoryForm = ({
             <Button
               type="button"
               variant="outline"
+              disabled={isSubmitting || isPending || isUploading}
               onClick={() => document.getElementById("image-upload")?.click()}
             >
               <UploadIcon className="mr-2 h-4 w-4" />
@@ -211,9 +258,8 @@ const CategoryForm = ({
                   size="icon"
                   variant="destructive"
                   className="h-8 w-8"
-                  onClick={() =>
-                    form.setValue("image", null, { shouldValidate: true })
-                  }
+                  onClick={handleRemoveImage}
+                  disabled={isSubmitting || isPending || isUploading}
                 >
                   <Trash2Icon className="h-4 w-4" />
                 </Button>
@@ -303,7 +349,7 @@ const CategoryForm = ({
       <Button
         type="submit"
         form="form-category"
-        disabled={isSubmitting || isPending}
+        disabled={isSubmitting || isPending || isUploading}
         className="flex-1"
       >
         {isSubmitting || isPending ? (
