@@ -133,3 +133,18 @@ type CollectionWithCount = Prisma.CollectionGetPayload<{
     };
   };
 }>;
+
+export type PromotionWithRelations = Prisma.PromotionGetPayload<{
+  include: {
+    applicableCategories: { include: { category: true } };
+    applicableBrands: { include: { brand: true } };
+    applicableProducts: { include: { product: true } };
+    applicableCollections: { include: { collection: true } };
+  };
+}>;
+
+export type CouponWithRelations = Prisma.CouponGetPayload<{
+  include: {
+    collections: { include: { collection: true } };
+  };
+}>;

@@ -131,8 +131,18 @@ export const getProductColumns = (): ColumnDef<ProductWithRelations>[] => [
   },
   {
     accessorKey: "sku",
+    accessorFn: (row) => row.variants.map((v) => v.sku),
     header: "SKU",
     filterFn: "includesString",
+  },
+  {
+    accessorKey: "variants",
+    accessorFn: (row) =>
+      row.productOptions.map(
+        (options) =>
+          `${options.name}: ${options.values.map((v) => v).join(", ")}`,
+      ),
+    header: "Variants",
   },
   {
     accessorKey: "basePriceCents",

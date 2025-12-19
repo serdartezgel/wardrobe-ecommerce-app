@@ -227,6 +227,7 @@ export async function updateProduct(
         variants: {
           include: {
             variantOptions: true,
+            orderItems: true,
           },
         },
       },
@@ -356,9 +357,33 @@ export async function updateProduct(
       }
 
       if (updateData.productOptions && updateData.variants) {
-        await tx.productVariant.deleteMany({
-          where: { productId: id },
-        });
+        const incomingSkus = new Set(updateData.variants.map((v) => v.sku));
+
+        const variantsToDelete = existingProduct.variants.filter(
+          (v) => !incomingSkus.has(v.sku),
+        );
+
+        const deletableVariants = variantsToDelete.filter(
+          (v) => !v.orderItems || v.orderItems.length === 0,
+        );
+
+        if (deletableVariants.length > 0) {
+          await tx.variantOption.deleteMany({
+            where: {
+              variantId: {
+                in: deletableVariants.map((v) => v.id),
+              },
+            },
+          });
+
+          await tx.productVariant.deleteMany({
+            where: {
+              id: {
+                in: deletableVariants.map((v) => v.id),
+              },
+            },
+          });
+        }
 
         await tx.productOption.deleteMany({
           where: { productId: id },
@@ -381,47 +406,90 @@ export async function updateProduct(
         );
 
         for (const variant of updateData.variants) {
-          const createdVariant = await tx.productVariant.create({
-            data: {
-              productId: id!,
-              sku: variant.sku,
-              stock: variant.stock,
-              priceCents: toCents(variant.priceCents),
-              compareAtPriceCents: toCents(variant.compareAtPriceCents ?? 0),
-              image: variant.image,
-            },
-          });
-
-          for (const variantOption of variant.variantOptions) {
-            const optionId = optionMap.get(variantOption.optionName);
-
-            if (!optionId) {
-              throw new Error(`Option ${variantOption.optionName} not found`);
-            }
-
-            await tx.variantOption.create({
-              data: {
-                variantId: createdVariant.id,
-                optionId,
-                value: variantOption.value,
-              },
-            });
-          }
-
-          const oldVariant = existingProduct.variants.find(
+          const existingVariant = existingProduct.variants.find(
             (v) => v.sku === variant.sku,
           );
 
-          if (!oldVariant || oldVariant.stock !== variant.stock) {
-            const change = variant.stock - (oldVariant?.stock || 0);
+          if (existingVariant) {
+            await tx.productVariant.update({
+              where: { id: existingVariant.id },
+              data: {
+                stock: variant.stock,
+                priceCents: toCents(variant.priceCents),
+                compareAtPriceCents: toCents(variant.compareAtPriceCents ?? 0),
+                image: variant.image,
+              },
+            });
+
+            await tx.variantOption.deleteMany({
+              where: { variantId: existingVariant.id },
+            });
+
+            for (const variantOption of variant.variantOptions) {
+              const optionId = optionMap.get(variantOption.optionName);
+
+              if (!optionId) {
+                throw new Error(`Option ${variantOption.optionName} not found`);
+              }
+
+              await tx.variantOption.create({
+                data: {
+                  variantId: existingVariant.id,
+                  optionId,
+                  value: variantOption.value,
+                },
+              });
+            }
+
+            if (existingVariant.stock !== variant.stock) {
+              const change = variant.stock - existingVariant.stock;
+              await tx.inventoryLog.create({
+                data: {
+                  variantId: existingVariant.id,
+                  change,
+                  resultingStock: variant.stock,
+                  type: change > 0 ? "RESTOCK" : "MANUAL_ADJUSTMENT",
+                  adminId: userId,
+                  note: "Stock updated via product edit",
+                },
+              });
+            }
+          } else {
+            const createdVariant = await tx.productVariant.create({
+              data: {
+                productId: id!,
+                sku: variant.sku,
+                stock: variant.stock,
+                priceCents: toCents(variant.priceCents),
+                compareAtPriceCents: toCents(variant.compareAtPriceCents ?? 0),
+                image: variant.image,
+              },
+            });
+
+            for (const variantOption of variant.variantOptions) {
+              const optionId = optionMap.get(variantOption.optionName);
+
+              if (!optionId) {
+                throw new Error(`Option ${variantOption.optionName} not found`);
+              }
+
+              await tx.variantOption.create({
+                data: {
+                  variantId: createdVariant.id,
+                  optionId,
+                  value: variantOption.value,
+                },
+              });
+            }
+
             await tx.inventoryLog.create({
               data: {
                 variantId: createdVariant.id,
-                change,
+                change: variant.stock,
                 resultingStock: variant.stock,
-                type: change > 0 ? "RESTOCK" : "MANUAL_ADJUSTMENT",
+                type: "RESTOCK",
                 adminId: userId,
-                note: "Stock updated via product edit",
+                note: "Variant created via product edit",
               },
             });
           }
@@ -488,7 +556,7 @@ export async function deleteProduct(
 
     if (hasOrders) {
       throw new Error(
-        "Cannot delete product that has been ordered. Consider archiving instead.",
+        "Cannot delete product that has been ordered. Consider deactivating instead.",
       );
     }
 
@@ -737,6 +805,13 @@ export async function getAllProducts(
         variants: {
           take: 1,
           orderBy: { createdAt: "asc" },
+        },
+        images: true,
+        productOptions: {
+          select: {
+            name: true,
+            values: true,
+          },
         },
       },
       orderBy: { createdAt: "desc" },
