@@ -148,3 +148,27 @@ export type CouponWithRelations = Prisma.CouponGetPayload<{
     collections: { include: { collection: true } };
   };
 }>;
+
+export type ReviewAdminWithRelations = Prisma.ReviewGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+        image: true;
+      };
+    };
+    product: {
+      include: {
+        images: { take: 1; orderBy: { order: "asc" } };
+        brand: true;
+      };
+    };
+    order: {
+      select: {
+        orderNumber: true;
+      };
+    };
+  };
+}>;
