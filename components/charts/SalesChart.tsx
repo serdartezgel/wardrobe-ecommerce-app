@@ -4,7 +4,7 @@ import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
-import { TIMEFRAMES } from "@/lib/constants/timeframes";
+import { TIMEFRAMES, TimeframeValue } from "@/lib/constants/timeframes";
 
 import {
   Card,
@@ -12,7 +12,6 @@ import {
   CardTitle,
   CardContent,
   CardDescription,
-  CardAction,
   CardFooter,
 } from "../ui/card";
 import {
@@ -21,15 +20,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "../ui/chart";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectLabel,
-  SelectItem,
-} from "../ui/select";
 
 const dummyData: Record<string, { month: string; sales: number }[]> = {
   last_24_hours: [
@@ -83,8 +73,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const SalesChart = () => {
-  const [timeframe, setTimeframe] = useState<string>("last_30_days");
+const SalesChart = ({ timeframe }: { timeframe: TimeframeValue }) => {
   const [chartData, setChartData] = useState(dummyData[timeframe]);
   const [isPending, startTransition] = useTransition();
 
@@ -118,26 +107,6 @@ const SalesChart = () => {
             {TIMEFRAMES.find((t) => t.value === timeframe)?.label}
           </CardDescription>
         </div>
-        <CardAction>
-          <Select
-            value={timeframe}
-            onValueChange={(value) => setTimeframe(value)}
-          >
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Timeframe</SelectLabel>
-                {TIMEFRAMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="mx-auto max-h-80">

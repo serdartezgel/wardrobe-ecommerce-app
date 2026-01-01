@@ -1,4 +1,5 @@
 import { Separator } from "@/components/ui/separator";
+import { formatPrice } from "@/lib/utils/price";
 import { OrderWithRelations } from "@/types/prisma";
 
 type OrderSummaryProps = {
@@ -13,24 +14,28 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
       <div className="space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
-          <span className="font-medium">{order.subtotal.toNumber()}</span>
+          <span className="font-medium">
+            {formatPrice(order.subtotalCents)}
+          </span>
         </div>
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Shipping</span>
-          <span className="font-medium">{order.shipping.toNumber()}</span>
+          <span className="font-medium">
+            {formatPrice(order.shippingCents)}
+          </span>
         </div>
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Tax</span>
-          <span className="font-medium">{order.tax.toNumber()}</span>
+          <span className="font-medium">{formatPrice(order.taxCents)}</span>
         </div>
 
-        {order.discount.toNumber() > 0 && (
+        {order.discountCents > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Discount</span>
             <span className="font-medium text-green-600">
-              -{order.discount.toNumber()}
+              -{formatPrice(order.discountCents)}
             </span>
           </div>
         )}
@@ -39,7 +44,9 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
 
         <div className="flex justify-between">
           <span className="font-semibold">Total</span>
-          <span className="text-xl font-bold">{order.total.toNumber()}</span>
+          <span className="text-xl font-bold">
+            {formatPrice(order.totalCents)}
+          </span>
         </div>
       </div>
     </div>

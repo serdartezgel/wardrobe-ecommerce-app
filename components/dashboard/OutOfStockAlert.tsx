@@ -80,9 +80,7 @@ export async function OutOfStockAlert() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {variant.variantOptions
-                    .map((vo: OutOfStockVariant) => vo.value)
-                    .join(" / ")}
+                  {variant.variantOptions.map((vo) => vo.value).join(" / ")}
                 </TableCell>
                 <TableCell>{variant.id}</TableCell>
                 <TableCell className="font-mono text-sm">

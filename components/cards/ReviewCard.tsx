@@ -7,6 +7,7 @@ import {
   MoreVerticalIcon,
   PencilIcon,
   Trash2Icon,
+  ShieldCheckIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -110,6 +111,7 @@ const ReviewCard = ({ review }: { review: ReviewWithRelations }) => {
                   </div>
                   {review.isVerified && (
                     <Badge variant="secondary" className="text-xs">
+                      <ShieldCheckIcon className="mr-1 size-3" />
                       Verified Purchase
                     </Badge>
                   )}

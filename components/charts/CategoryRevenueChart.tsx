@@ -11,26 +11,16 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { TIMEFRAMES } from "@/lib/constants/timeframes";
+import { TIMEFRAMES, TimeframeValue } from "@/lib/constants/timeframes";
 
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
-  CardAction,
   CardContent,
   CardFooter,
 } from "../ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 
 const dummyRevenueData: Record<
   string,
@@ -82,8 +72,7 @@ const chartConfig = {
   kids: { label: "Kids" },
 } satisfies ChartConfig;
 
-const CategoryRevenueChart = () => {
-  const [timeframe, setTimeframe] = useState("last_30_days");
+const CategoryRevenueChart = ({ timeframe }: { timeframe: TimeframeValue }) => {
   const [chartData, setChartData] = useState(dummyRevenueData[timeframe]);
   const [isPending, startTransition] = useTransition();
 
@@ -111,24 +100,6 @@ const CategoryRevenueChart = () => {
             {TIMEFRAMES.find((t) => t.value === timeframe)?.label}
           </CardDescription>
         </div>
-
-        <CardAction>
-          <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Timeframe</SelectLabel>
-                {TIMEFRAMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
 
       <CardContent>

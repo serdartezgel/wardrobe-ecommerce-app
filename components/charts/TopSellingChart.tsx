@@ -10,14 +10,13 @@ import {
   YAxis,
 } from "recharts";
 
-import { TIMEFRAMES } from "@/lib/constants/timeframes";
+import { TIMEFRAMES, TimeframeValue } from "@/lib/constants/timeframes";
 
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
-  CardAction,
   CardContent,
   CardFooter,
 } from "../ui/card";
@@ -27,15 +26,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "../ui/chart";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectLabel,
-  SelectItem,
-} from "../ui/select";
 
 const PRODUCT_COLORS = [
   "var(--chart-1)",
@@ -106,8 +96,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const TopSellingChart = () => {
-  const [timeframe, setTimeframe] = useState("last_30_days");
+const TopSellingChart = ({ timeframe }: { timeframe: TimeframeValue }) => {
   const [chartData, setChartData] = useState(dummyProductsData[timeframe]);
   const [isPending, startTransition] = useTransition();
 
@@ -128,24 +117,6 @@ const TopSellingChart = () => {
             {TIMEFRAMES.find((t) => t.value === timeframe)?.label}
           </CardDescription>
         </div>
-
-        <CardAction>
-          <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Timeframe</SelectLabel>
-                {TIMEFRAMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
 
       <CardContent>

@@ -81,9 +81,7 @@ export async function LowStockAlert() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {variant.variantOptions
-                    .map((vo: LowStockVariant) => vo.value)
-                    .join(" / ")}
+                  {variant.variantOptions.map((vo) => vo.value).join(" / ")}
                 </TableCell>
                 <TableCell>{variant.id}</TableCell>
                 <TableCell className="font-mono text-sm">

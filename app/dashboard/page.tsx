@@ -6,6 +6,8 @@ import InventoryStatusChart from "@/components/charts/InventoryStatusChart";
 import OrdersChart from "@/components/charts/OrdersChart";
 import SalesChart from "@/components/charts/SalesChart";
 import TopSellingChart from "@/components/charts/TopSellingChart";
+import TimeframeSelector from "@/components/common/TimeframeSelector";
+import { TimeframeValue } from "@/lib/constants/timeframes";
 
 const DUMMY_DASHBOARD_METRICS: DashboardMetrics = {
   // Sales Metrics
@@ -50,25 +52,34 @@ const DUMMY_DASHBOARD_METRICS: DashboardMetrics = {
   activeCoupons: 12,
 };
 
-const DashboardPage = () => {
+const DashboardPage = async ({ searchParams }: RouteParams) => {
+  const params = await searchParams;
+  const timeframe = (params.timeframe as TimeframeValue) || "last_30_days";
+
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-bold">Overview</h1>
-        <p className="text-muted-foreground mt-1">
-          Welcome back! Here&apos;s an overview of your shop.
-        </p>
+      <header className="flex flex-wrap items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Overview</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Here&apos;s an overview of your shop.
+          </p>
+        </div>
+
+        <div className="fixed right-6">
+          <TimeframeSelector route="/dashboard" />
+        </div>
       </header>
 
-      <OverviewCard metrics={DUMMY_DASHBOARD_METRICS} />
+      <OverviewCard metrics={DUMMY_DASHBOARD_METRICS} timeframe={timeframe} />
 
       <div className="grid grid-cols-1 gap-x-4 gap-y-6 lg:grid-cols-2">
-        <SalesChart />
-        <OrdersChart />
-        <TopSellingChart />
-        <CategoryRevenueChart />
-        <CustomerGrowthChart />
-        <InventoryStatusChart />
+        <SalesChart timeframe={timeframe} />
+        <OrdersChart timeframe={timeframe} />
+        <TopSellingChart timeframe={timeframe} />
+        <CategoryRevenueChart timeframe={timeframe} />
+        <CustomerGrowthChart timeframe={timeframe} />
+        <InventoryStatusChart timeframe={timeframe} />
       </div>
 
       <RecentActivities />

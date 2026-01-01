@@ -3,12 +3,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { Pie, PieChart } from "recharts";
 
-import { TIMEFRAMES } from "@/lib/constants/timeframes";
+import { TIMEFRAMES, TimeframeValue } from "@/lib/constants/timeframes";
 import { OrderStatus } from "@/lib/generated/prisma";
 
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -23,15 +22,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "../ui/chart";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectLabel,
-  SelectItem,
-} from "../ui/select";
 
 const COLORS = [
   "#facc15", // Pending
@@ -134,8 +124,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const OrdersChart = () => {
-  const [timeframe, setTimeframe] = useState<string>("last_30_days");
+const OrdersChart = ({ timeframe }: { timeframe: TimeframeValue }) => {
   const [chartData, setChartData] = useState(dummyOrdersData[timeframe]);
   const [isPending, startTransition] = useTransition();
 
@@ -156,23 +145,6 @@ const OrdersChart = () => {
             {TIMEFRAMES.find((t) => t.value === timeframe)?.label}
           </CardDescription>
         </div>
-        <CardAction>
-          <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Timeframe</SelectLabel>
-                {TIMEFRAMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
 
       <CardContent>

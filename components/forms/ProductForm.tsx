@@ -84,6 +84,14 @@ const ProductForm = ({
       ? {
           ...initialData,
           basePriceCents: formatPriceNumber(Number(initialData.basePriceCents)),
+          variants:
+            initialData.variants?.map((variant) => ({
+              ...variant,
+              priceCents: Number(formatPriceNumber(Number(variant.priceCents))),
+              compareAtPriceCents: Number(
+                formatPriceNumber(Number(variant.compareAtPriceCents)),
+              ),
+            })) ?? [],
         }
       : {
           name: "",

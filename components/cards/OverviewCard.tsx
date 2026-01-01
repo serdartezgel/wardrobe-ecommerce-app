@@ -3,33 +3,23 @@
 import { useEffect, useState, useTransition } from "react";
 
 import { dashboardStats } from "@/lib/constants/dashboardStats";
-import { TIMEFRAMES } from "@/lib/constants/timeframes";
+import { TIMEFRAMES, TimeframeValue } from "@/lib/constants/timeframes";
 
 import StatCard from "./StatCard";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "../ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 
 interface OverviewCardProps {
   metrics: DashboardMetrics;
+  timeframe: TimeframeValue;
 }
 
-const OverviewCard = ({ metrics }: OverviewCardProps) => {
-  const [timeframe, setTimeframe] = useState<string>("last_30_days");
+const OverviewCard = ({ metrics, timeframe }: OverviewCardProps) => {
   const [stats, setStats] = useState(dashboardStats(metrics));
 
   const [isPending, startTransition] = useTransition();
@@ -39,10 +29,6 @@ const OverviewCard = ({ metrics }: OverviewCardProps) => {
       setStats(dashboardStats(metrics));
     });
   }, [metrics, timeframe]);
-
-  const handleTimeframeChange = (value: string) => {
-    setTimeframe(value);
-  };
 
   return (
     <Card className="min-h-[850px] xl:min-h-[512px]">
@@ -57,23 +43,6 @@ const OverviewCard = ({ metrics }: OverviewCardProps) => {
               : `${TIMEFRAMES.find((t) => t.value === timeframe)?.label}`}
           </CardDescription>
         </div>
-        <CardAction>
-          <Select value={timeframe} onValueChange={handleTimeframeChange}>
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Timeframe</SelectLabel>
-                {TIMEFRAMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {isPending

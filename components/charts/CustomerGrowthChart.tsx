@@ -4,14 +4,13 @@ import { TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { useState, useTransition, useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-import { TIMEFRAMES } from "@/lib/constants/timeframes";
+import { TIMEFRAMES, TimeframeValue } from "@/lib/constants/timeframes";
 
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
-  CardAction,
   CardContent,
   CardFooter,
 } from "../ui/card";
@@ -21,15 +20,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "../ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 
 const dummyCustomerGrowth: Record<
   string,
@@ -229,8 +219,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const CustomerGrowthChart = () => {
-  const [timeframe, setTimeframe] = useState<string>("last_30_days");
+const CustomerGrowthChart = ({ timeframe }: { timeframe: TimeframeValue }) => {
   const [chartData, setChartData] = useState(dummyCustomerGrowth[timeframe]);
   const [isPending, startTransition] = useTransition();
 
@@ -264,26 +253,6 @@ const CustomerGrowthChart = () => {
             {TIMEFRAMES.find((t) => t.value === timeframe)?.label}
           </CardDescription>
         </div>
-        <CardAction>
-          <Select
-            value={timeframe}
-            onValueChange={(value) => setTimeframe(value)}
-          >
-            <SelectTrigger className="no-focus">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Timeframe</SelectLabel>
-                {TIMEFRAMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="mx-auto max-h-80">
